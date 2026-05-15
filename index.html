@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>QBIT Easy CM</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap');
 :root{
@@ -15,7 +14,8 @@
   --green:#4ade80;--green-bg:#0d2518;--green-b:#1a4a2e;
   --blue:#60a5fa;--blue-bg:#0a1929;--blue-b:#1a3a5c;
   --amber:#fbbf24;--amber-bg:#1f1500;--amber-b:#3d2e00;
-  --red:#f87171;
+  --red:#f87171;--red-bg:#1f0a0a;
+  --purple:#a78bfa;--purple-bg:#1a1040;--purple-b:#3a2a70;
   --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -64,8 +64,6 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .stat-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);margin-bottom:6px}
 .stat-n{font-size:26px;font-weight:300;font-family:var(--mono)}
 .dash-body{flex:1;overflow-y:auto;padding:24px 36px;display:flex;flex-direction:column;gap:28px}
-
-/* DASHBOARD SECTIONS */
 .dash-section-title{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .dash-section-title span{font-size:9px;padding:2px 7px;border-radius:10px}
 .cal-rows{display:flex;flex-direction:column;gap:8px}
@@ -79,10 +77,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .s-d{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b)}
 .s-r{background:var(--green-bg);color:var(--green);border:1px solid var(--green-b)}
 .s-a{background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-b)}
+.s-f{background:var(--purple-bg);color:var(--purple);border:1px solid var(--purple-b)}
 .cal-row-action{font-size:11px;color:var(--text3)}
-.empty-section{font-size:12px;color:var(--text3);padding:16px;background:var(--bg3);border:1px dashed var(--border2);border-radius:8px;text-align:center}
-
-/* CLIENTS GRID */
 .cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
 .ccard{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden}
 .ccard:hover{border-color:var(--border2);transform:translateY(-2px)}
@@ -94,14 +90,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .tag.g{background:var(--green-bg);color:var(--green);border-color:var(--green-b)}
 .tag.b{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-b)}
 .tag.a{background:var(--amber-bg);color:var(--amber);border-color:var(--amber-b)}
+.tag.p{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-b)}
 .add-ccard{background:transparent;border:1px dashed var(--border2);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:120px;gap:8px}
 .add-ccard:hover{border-color:var(--border3)}
 .add-ccard span{font-size:12px;color:var(--text3)}
 
 /* WORKSPACE */
 .workspace{display:flex;flex:1;overflow:hidden}
-.ws-left{width:300px;min-width:300px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
-.ws-right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
+.ws-left{width:280px;min-width:280px;border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.ws-right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
 .ws-hdr{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
 .ws-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .ws-nm{font-size:14px;font-weight:500}
@@ -109,7 +106,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .ws-acts{margin-left:auto;display:flex;gap:6px}
 .brief-panel{padding:12px 14px;border-bottom:1px solid var(--border);flex-shrink:0}
 .plbl{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:8px}
-.brief-txt{font-size:11px;color:var(--text2);line-height:1.7;max-height:110px;overflow-y:auto;white-space:pre-wrap}
+.brief-txt{font-size:11px;color:var(--text2);line-height:1.7;max-height:100px;overflow-y:auto;white-space:pre-wrap}
 .bedit{font-size:10px;color:var(--text3);cursor:pointer;text-decoration:underline;margin-top:6px;display:inline-block}
 .bedit:hover{color:var(--text2)}
 .cals-panel{flex:1;overflow-y:auto;padding:12px 14px}
@@ -123,13 +120,16 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .chat-hdr{padding:12px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
 .chat-hdr-title{font-size:13px;font-weight:500}
 .chat-model{margin-left:auto;font-size:10px;color:var(--text3);font-family:var(--mono)}
-
-/* LOADING INDICATOR while Claude is responding */
-.thinking-bar{display:none;align-items:center;gap:8px;padding:8px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-b);font-size:11px;color:var(--amber);flex-shrink:0}
+.thinking-bar{display:none;align-items:center;gap:8px;padding:7px 18px;background:var(--amber-bg);border-bottom:1px solid var(--amber-b);font-size:11px;color:var(--amber);flex-shrink:0}
 .thinking-bar.show{display:flex}
-.thinking-bar-dot{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:pulse 1s infinite}
-.thinking-bar-dot:nth-child(2){animation-delay:.15s}
-.thinking-bar-dot:nth-child(3){animation-delay:.3s}
+.tbd{width:5px;height:5px;border-radius:50%;background:var(--amber);animation:pulse 1s infinite}
+.tbd:nth-child(2){animation-delay:.15s}
+.tbd:nth-child(3){animation-delay:.3s}
+
+/* MSG NAV BUTTONS */
+.msg-nav{position:absolute;right:16px;bottom:160px;display:flex;flex-direction:column;gap:6px;z-index:10}
+.msg-nav-btn{width:32px;height:32px;border-radius:50%;background:var(--bg3);border:1px solid var(--border2);color:var(--text2);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.msg-nav-btn:hover{background:var(--bg4);color:var(--text);border-color:var(--border3)}
 
 .chat-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
 .msg{display:flex;gap:8px;animation:fin .2s ease}
@@ -148,13 +148,15 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .msg-bub li{margin-bottom:3px}
 .msg-bub hr{border:none;border-top:1px solid var(--border);margin:10px 0}
 .msg-bub code{font-family:var(--mono);font-size:10px;background:var(--bg);padding:1px 5px;border-radius:3px;color:var(--green)}
-/* Inline action button inside chat bubble */
 .msg-action-btn{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);color:var(--green);border:1px solid var(--green-b);border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:var(--sans);margin-top:10px;transition:all .15s}
 .msg-action-btn:hover{background:var(--green);color:var(--bg)}
+.msg-continue-btn{display:inline-flex;align-items:center;gap:6px;background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b);border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;font-family:var(--sans);margin-top:10px;transition:all .15s}
+.msg-continue-btn:hover{background:var(--amber);color:var(--bg)}
 .typing{display:flex;gap:4px;align-items:center;padding:4px 0}
 .td{width:5px;height:5px;border-radius:50%;background:var(--text3);animation:pulse 1.2s infinite}
 .td:nth-child(2){animation-delay:.2s}
 .td:nth-child(3){animation-delay:.4s}
+
 .chat-inp-area{padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0}
 .hints{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
 .hint{font-size:10px;padding:3px 9px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text3);cursor:pointer;transition:all .15s;font-family:var(--sans)}
@@ -170,12 +172,25 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 /* APPROVAL BAR */
 .abar{padding:12px 18px;border-top:1px solid var(--border);background:var(--bg2);display:none;flex-direction:column;gap:8px;flex-shrink:0}
 .abar.show{display:flex}
-.abar-top{display:flex;align-items:center;gap:10px}
-.abar-info{flex:1;font-size:11px;color:var(--text2)}
-.appr-badge{display:flex;align-items:center;gap:6px;background:var(--blue-bg);border:1px solid var(--blue-b);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--blue)}
-.appr-detail{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.7;color:var(--text2);max-height:80px;overflow-y:auto;white-space:pre-wrap}
+.abar-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.abar-info{flex:1;font-size:11px;color:var(--text2);min-width:120px}
 .lbox{display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:8px 12px;margin-top:6px}
 .lurl{font-family:var(--mono);font-size:10px;color:var(--blue);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.appr-badge{display:flex;align-items:center;gap:6px;background:var(--blue-bg);border:1px solid var(--blue-b);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--blue)}
+.appr-detail{background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:10px 12px;font-size:11px;line-height:1.7;color:var(--text2);max-height:80px;overflow-y:auto;white-space:pre-wrap}
+
+/* CONFLICT REVIEW */
+.conflict-card{background:var(--bg3);border:1px solid var(--amber-b);border-radius:8px;padding:14px;margin-bottom:8px}
+.conflict-title{font-size:11px;font-weight:600;color:var(--amber);margin-bottom:10px}
+.conflict-row{display:flex;gap:8px;margin-bottom:8px}
+.conflict-opt{flex:1;border-radius:6px;padding:8px 10px;font-size:11px;cursor:pointer;border:2px solid transparent;transition:all .15s;line-height:1.5}
+.conflict-opt.tera{background:var(--purple-bg);border-color:var(--purple-b);color:var(--text)}
+.conflict-opt.cliente{background:var(--blue-bg);border-color:var(--blue-b);color:var(--text)}
+.conflict-opt.selected-tera{border-color:var(--purple);}
+.conflict-opt.selected-cliente{border-color:var(--blue);}
+.conflict-label{font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;font-weight:600}
+.conflict-label.tera{color:var(--purple)}
+.conflict-label.cliente{color:var(--blue)}
 
 /* BUTTONS */
 .btn{padding:6px 12px;border-radius:6px;font-size:11px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;font-family:var(--sans);transition:all .15s;white-space:nowrap}
@@ -187,12 +202,14 @@ body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:14
 .btn.g:hover{background:var(--green);color:var(--bg)}
 .btn.bl{background:var(--blue-bg);color:var(--blue);border-color:var(--blue-b)}
 .btn.bl:hover{background:var(--blue);color:var(--bg)}
+.btn.pu{background:var(--purple-bg);color:var(--purple);border-color:var(--purple-b)}
+.btn.pu:hover{background:var(--purple);color:var(--bg)}
 
 /* OVERLAYS */
 .ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
 .ov.open{display:flex;animation:fin .15s}
 .modal{background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:520px;max-width:95vw;max-height:88vh;overflow-y:auto;animation:fin .2s ease}
-.modal.wide{width:820px}
+.modal.wide{width:860px}
 .mhdr{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--bg2);z-index:1}
 .mtitle{font-size:15px;font-weight:500}
 .mx{background:none;border:none;color:var(--text3);font-size:20px;cursor:pointer;padding:0;line-height:1;transition:color .15s}
@@ -211,11 +228,14 @@ select.fi option{background:var(--bg2)}
 .color-row{display:flex;gap:8px;align-items:center}
 .color-prev{width:30px;height:30px;border-radius:50%;border:1px solid var(--border);flex-shrink:0}
 .hn{font-size:10px;color:var(--text3);margin-top:4px;line-height:1.5}
+.ss{margin-bottom:22px}
+.sst{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.mk{font-family:var(--mono);font-size:10px;letter-spacing:.5px}
 
 /* CAL GRID */
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:14px}
 .cal-dhdr{text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--text3);padding:6px 0}
-.cal-day{min-height:64px;border-radius:6px;padding:5px;border:1px solid var(--border);background:var(--bg3);position:relative;transition:all .15s;cursor:default}
+.cal-day{min-height:72px;border-radius:6px;padding:5px;border:1px solid var(--border);background:var(--bg3);position:relative;transition:all .15s;cursor:default}
 .cal-day.empty{background:transparent;border-color:transparent}
 .cal-day.pub{cursor:pointer;border-color:var(--border2)}
 .cal-day.pub:hover{border-color:var(--border3);background:var(--bg4)}
@@ -223,7 +243,7 @@ select.fi option{background:var(--bg2)}
 .cal-dn{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:3px}
 .cal-day.pub .cal-dn{color:var(--text)}
 .cal-dtype{font-size:8px;letter-spacing:.5px;text-transform:uppercase;padding:2px 4px;border-radius:3px;display:inline-block;margin-bottom:3px}
-.cal-dsel{font-size:9px;color:var(--text2);line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cal-dsel{font-size:9px;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .cal-hlbl{font-size:8px;color:var(--amber);margin-top:2px}
 .cal-prog{display:flex;align-items:center;gap:10px;padding:10px 14px;border-top:1px solid var(--border);font-size:11px;color:var(--text2)}
 .prog-bar{flex:1;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
@@ -237,18 +257,12 @@ select.fi option{background:var(--bg2)}
 .idea-title{font-size:13px;font-weight:500;margin-bottom:3px}
 .idea-desc{font-size:11px;color:var(--text2);line-height:1.5}
 
-/* SETTINGS */
-.ss{margin-bottom:22px}
-.sst{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--text3);margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)}
-.mk{font-family:var(--mono);font-size:10px;letter-spacing:.5px}
-
 /* TOAST */
 .toast{position:fixed;bottom:20px;right:20px;z-index:999;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 16px;font-size:12px;display:none;animation:fin .2s ease;max-width:300px}
 .toast.show{display:block}
 .toast.ok{border-color:var(--green-b);color:var(--green)}
 .toast.err{border-color:#3d1515;color:var(--red)}
 
-/* EMPTY / WELCOME */
 .empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--text3);padding:40px;text-align:center}
 .empty-ico{font-size:40px;opacity:.25}
 .empty-ttl{font-size:15px;color:var(--text2)}
@@ -268,10 +282,7 @@ select.fi option{background:var(--bg2)}
 <body>
 
 <div class="topbar">
-  <div class="logo" onclick="showDash()">
-    <span class="logo-ast">✳</span>
-    <span class="logo-txt">QBIT</span>
-  </div>
+  <div class="logo" onclick="showDash()"><span class="logo-ast">✳</span><span class="logo-txt">QBIT</span></div>
   <span class="logo-sub">easy cm</span>
   <div class="tbr">
     <div class="tchip"><div class="tdot"></div><span style="color:var(--text2);font-size:10px">tokens</span><span class="tval" id="tval">0</span></div>
@@ -289,13 +300,10 @@ select.fi option{background:var(--bg2)}
   </div>
 
   <div class="main">
-
-    <!-- DASHBOARD -->
     <div class="screen active" id="screen-dash">
       <div id="dash-inner" style="display:flex;flex-direction:column;flex:1;overflow:hidden"></div>
     </div>
 
-    <!-- CLIENT WORKSPACE -->
     <div class="screen" id="screen-client">
       <div class="workspace">
         <div class="ws-left">
@@ -313,7 +321,7 @@ select.fi option{background:var(--bg2)}
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
               <div class="plbl" style="margin:0">Calendarios</div>
             </div>
-            <div id="cals-list"><div style="font-size:11px;color:var(--text3)">Generá tu primer calendario con Claude →</div></div>
+            <div id="cals-list"><div style="font-size:11px;color:var(--text3)">Generá tu primer calendario →</div></div>
           </div>
         </div>
 
@@ -322,18 +330,20 @@ select.fi option{background:var(--bg2)}
             <div class="chat-hdr-title">Chat con Claude</div>
             <div class="chat-model">claude-sonnet-4-6</div>
           </div>
-          <!-- Bar shown while Claude is thinking, even if you navigate away -->
           <div class="thinking-bar" id="thinking-bar">
-            <div class="thinking-bar-dot"></div>
-            <div class="thinking-bar-dot"></div>
-            <div class="thinking-bar-dot"></div>
-            <span>Claude está pensando… no navegues hasta que termine</span>
+            <div class="tbd"></div><div class="tbd"></div><div class="tbd"></div>
+            <span>Claude está pensando…</span>
+          </div>
+          <!-- Fast nav between user messages -->
+          <div class="msg-nav">
+            <button class="msg-nav-btn" onclick="navMsg(-1)" title="Mensaje anterior">↑</button>
+            <button class="msg-nav-btn" onclick="navMsg(1)" title="Mensaje siguiente">↓</button>
           </div>
           <div class="chat-msgs" id="chat-msgs">
             <div class="empty" id="chat-empty">
               <div class="empty-ico">💬</div>
               <div class="empty-ttl">Empezá a chatear</div>
-              <div class="empty-sub">El briefing del cliente ya está cargado. Pedile a Claude el calendario del mes que necesitás.</div>
+              <div class="empty-sub">El briefing del cliente ya está cargado. Pedile el calendario del mes que necesitás.</div>
             </div>
           </div>
           <div class="chat-inp-area">
@@ -346,25 +356,37 @@ select.fi option{background:var(--bg2)}
           <div class="abar" id="abar">
             <div class="abar-top">
               <div class="abar-info" id="abar-info">Cuando los copys estén listos, generá el link para el cliente.</div>
-              <button class="btn g" onclick="genLink()" id="gen-btn">✦ Generar link del cliente</button>
+              <button class="btn g" onclick="genClientLink()" id="gen-btn">✦ Generar link del cliente</button>
             </div>
             <div id="link-area" style="display:none">
               <div class="lbox"><span class="lurl" id="lurl"></span><button class="btn" onclick="copyLink()" style="font-size:10px;padding:3px 8px">Copiar</button></div>
-              <div style="font-size:10px;color:var(--text3);margin-top:6px">El cliente abre este link desde cualquier dispositivo. Cuando apruebe, te notificamos acá.</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:6px">El cliente ve el calendario con tus selecciones resaltadas. Cuando apruebe, te avisamos acá.</div>
             </div>
-            <div id="appr-area" style="display:none">
-              <div class="appr-badge">✓ Aprobado por el cliente</div>
-              <div class="appr-detail" id="appr-detail"></div>
+            <!-- CLIENT APPROVED: show conflict review -->
+            <div id="conflict-area" style="display:none">
+              <div style="font-size:11px;color:var(--blue);margin-bottom:10px;font-weight:500">✓ El cliente aprobó. Revisá las diferencias:</div>
+              <div id="conflict-list"></div>
+              <div style="display:flex;gap:8px;margin-top:10px">
+                <button class="btn pu" onclick="finalApprove()">✓ Aprobar todo y generar calendario</button>
+                <button class="btn" onclick="clearAppr()">Cancelar</button>
+              </div>
+            </div>
+            <!-- FINAL APPROVED -->
+            <div id="final-area" style="display:none">
+              <div class="appr-badge">✓ Calendario final aprobado</div>
               <div style="display:flex;gap:8px;margin-top:8px">
-                <button class="btn bl" onclick="doExcel()">⬇ Descargar Excel</button>
+                <button class="btn pu" onclick="genDesignerLink()">🎨 Generar link para diseñadora</button>
                 <button class="btn" onclick="clearAppr()">Limpiar</button>
+              </div>
+              <div id="designer-link-area" style="display:none;margin-top:8px">
+                <div class="lbox"><span class="lurl" id="designer-lurl"></span><button class="btn" onclick="copyDesignerLink()" style="font-size:10px;padding:3px 8px">Copiar</button></div>
+                <div style="font-size:10px;color:var(--text3);margin-top:6px">La diseñadora ve solo los contenidos aprobados, sin opciones.</div>
               </div>
             </div>
           </div>
         </div>
       </div>
     </div>
-
   </div>
 </div>
 
@@ -376,7 +398,7 @@ select.fi option{background:var(--bg2)}
       <div class="fg"><label class="fl">Nombre</label><input class="fi" id="c-nm" placeholder="Ej: Universal Growing"></div>
       <div class="fg"><label class="fl">Tipo / Industria</label><input class="fi" id="c-tp" placeholder="Ej: B2B Mayorista Cannabis"></div>
       <div class="fg"><label class="fl">Color de acento</label><div class="color-row"><div class="color-prev" id="c-prev" style="background:#4ade80"></div><input class="fi" id="c-color" value="#4ade80" oninput="prevClr(this.value)" style="flex:1"></div></div>
-      <div class="fg"><label class="fl">Briefing completo</label><textarea class="fi" id="c-brief" style="min-height:220px" placeholder="Toda la info del cliente: tono, público, marcas, paleta, reglas, historial de contenidos, URLs, contacto…"></textarea></div>
+      <div class="fg"><label class="fl">Briefing completo</label><textarea class="fi" id="c-brief" style="min-height:220px" placeholder="Tono, público, marcas, paleta, reglas, historial de contenidos, URLs, contacto…"></textarea></div>
     </div>
     <div class="mfooter"><button class="btn" onclick="closeOv('ov-cm')">Cancelar</button><button class="btn p" onclick="saveClient()">Guardar</button></div>
   </div>
@@ -390,17 +412,12 @@ select.fi option{background:var(--bg2)}
       <div class="ss">
         <div class="sst">Anthropic API</div>
         <div class="fg"><label class="fl">API Key</label><input class="fi mk" id="s-key" type="password" placeholder="sk-ant-..."><div class="hn">Se guarda solo en este navegador.</div></div>
-        <div class="fg"><label class="fl">Modelo</label>
-          <select class="fi" id="s-model">
-            <option value="claude-sonnet-4-6">Claude Sonnet 4.6 — recomendado</option>
-            <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — más rápido y barato</option>
-          </select>
-        </div>
+        <div class="fg"><label class="fl">Modelo</label><select class="fi" id="s-model"><option value="claude-sonnet-4-6">Claude Sonnet 4.6 — recomendado</option><option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 — rápido y barato</option></select></div>
       </div>
       <div class="ss">
         <div class="sst">Supabase</div>
         <div class="fg"><label class="fl">Project URL</label><input class="fi" id="s-sburl" placeholder="https://xxxx.supabase.co"></div>
-        <div class="fg"><label class="fl">Anon / Publishable Key</label><input class="fi mk" id="s-sbkey" placeholder="sb_publishable_... o eyJ..."><div class="hn">Settings → API Keys en tu dashboard de Supabase.</div></div>
+        <div class="fg"><label class="fl">Anon / Publishable Key</label><input class="fi mk" id="s-sbkey" placeholder="sb_publishable_..."><div class="hn">Settings → API Keys en Supabase.</div></div>
       </div>
       <div class="ss"><div class="sst">Agencia</div><div class="fg"><label class="fl">Nombre</label><input class="fi" id="s-agency" value="QBIT"></div></div>
     </div>
@@ -439,27 +456,40 @@ const S={
   cur:null,editing:null,tokens:0,
   calMonth:null,calYear:null,calIdeas:{},calSel:{},calPubs:[],calHols:[],
   activeDayKey:null,activeCalId:null,
-  thinking:false  // global flag: Claude is responding
+  thinking:false,
+  // Final selections after conflict resolution
+  finalSel:{}
 };
 let sb=null,tempSel=null;
 
 function $id(i){return document.getElementById(i)}
+
 function persist(){
-  localStorage.setItem("qb_c",JSON.stringify(S.clients));
-  localStorage.setItem("qb_cv",JSON.stringify(S.convs));
-  localStorage.setItem("qb_ca",JSON.stringify(S.cals));
-  localStorage.setItem("qb_cfg",JSON.stringify(S.cfg));
-  localStorage.setItem("qb_cal",JSON.stringify({calMonth:S.calMonth,calYear:S.calYear,calIdeas:S.calIdeas,calPubs:S.calPubs,calHols:S.calHols,calSel:S.calSel,activeCalId:S.activeCalId}));
+  localStorage.setItem('qb_c',JSON.stringify(S.clients));
+  localStorage.setItem('qb_cv',JSON.stringify(S.convs));
+  localStorage.setItem('qb_ca',JSON.stringify(S.cals));
+  localStorage.setItem('qb_cfg',JSON.stringify(S.cfg));
+  localStorage.setItem('qb_cal',JSON.stringify({
+    calMonth:S.calMonth,calYear:S.calYear,
+    calIdeas:S.calIdeas,calPubs:S.calPubs,
+    calHols:S.calHols,calSel:S.calSel,
+    activeCalId:S.activeCalId,finalSel:S.finalSel
+  }));
 }
 function hydrate(){
   try{
-    S.clients=JSON.parse(localStorage.getItem("qb_c")||"[]");
-    S.convs=JSON.parse(localStorage.getItem("qb_cv")||"{}");
-    S.cals=JSON.parse(localStorage.getItem("qb_ca")||"{}");
-    const c=JSON.parse(localStorage.getItem("qb_cfg")||"{}");
+    S.clients=JSON.parse(localStorage.getItem('qb_c')||'[]');
+    S.convs=JSON.parse(localStorage.getItem('qb_cv')||'{}');
+    S.cals=JSON.parse(localStorage.getItem('qb_ca')||'{}');
+    const c=JSON.parse(localStorage.getItem('qb_cfg')||'{}');
     S.cfg={...S.cfg,...c};
-    const cal=JSON.parse(localStorage.getItem("qb_cal")||"{}");
-    if(cal.calMonth){S.calMonth=cal.calMonth;S.calYear=cal.calYear;S.calIdeas=cal.calIdeas||{};S.calPubs=cal.calPubs||[];S.calHols=cal.calHols||[];S.calSel=cal.calSel||{};S.activeCalId=cal.activeCalId||null;}
+    const cal=JSON.parse(localStorage.getItem('qb_cal')||'{}');
+    if(cal.calMonth){
+      S.calMonth=cal.calMonth;S.calYear=cal.calYear;
+      S.calIdeas=cal.calIdeas||{};S.calPubs=cal.calPubs||[];
+      S.calHols=cal.calHols||[];S.calSel=cal.calSel||{};
+      S.activeCalId=cal.activeCalId||null;S.finalSel=cal.finalSel||{};
+    }
   }catch(e){}
 }
 function initSB(){
@@ -467,9 +497,6 @@ function initSB(){
   try{sb=supabase.createClient(S.cfg.sbUrl,S.cfg.sbKey)}catch(e){sb=null}
 }
 
-// ══════════════════════════════════════════════
-// CONSTANTS
-// ══════════════════════════════════════════════
 const MN=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const TC={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educación:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
 const TL={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educación:'Know-how',producto:'Producto',marca:'Producto'};
@@ -482,13 +509,10 @@ function showDash(){
   act('screen-dash');
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   $id('nav-dash').classList.add('active');
-  S.cur=null;
-  renderDash();
+  S.cur=null;renderDash();
 }
-
 function showClient(id){
-  S.cur=id;
-  const c=getC(id);if(!c)return;
+  S.cur=id;const c=getC(id);if(!c)return;
   act('screen-client');
   document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
   const ni=$id('nav-'+id);if(ni)ni.classList.add('active');
@@ -496,19 +520,23 @@ function showClient(id){
   $id('ws-nm').textContent=c.name;
   $id('ws-tp').textContent=c.type;
   $id('brief-txt').textContent=c.briefing||'Sin briefing.';
-  renderChat(id);
-  renderCals(id);
-  renderHints();
-  renderApprBar(id);
-  // Show thinking bar if Claude is still working
+  renderChat(id);renderCals(id);renderHints();renderApprBar(id);
   $id('thinking-bar').className='thinking-bar'+(S.thinking?' show':'');
 }
-
-function act(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  $id(id).classList.add('active');
-}
+function act(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$id(id).classList.add('active')}
 function getC(id){return S.clients.find(c=>c.id===id)}
+
+// ══════════════════════════════════════════════
+// FAST MSG NAV
+// ══════════════════════════════════════════════
+let navIdx=-1;
+function navMsg(dir){
+  const w=$id('chat-msgs');
+  const userMsgs=[...w.querySelectorAll('.msg.user')];
+  if(!userMsgs.length)return;
+  navIdx=Math.max(0,Math.min(userMsgs.length-1,navIdx+dir));
+  userMsgs[navIdx].scrollIntoView({behavior:'smooth',block:'center'});
+}
 
 // ══════════════════════════════════════════════
 // DASHBOARD
@@ -516,191 +544,101 @@ function getC(id){return S.clients.find(c=>c.id===id)}
 function renderDash(){
   const el=$id('dash-inner');
   if(!S.clients.length){
-    el.innerHTML=`<div class="welcome">
-      <div class="w-logo"><span class="w-ast">✳</span>QBIT</div>
-      <div class="w-sub">Easy CM · Content Management</div>
-      <div class="w-desc">Tu sistema de calendarios de contenido con IA integrada. Creá clientes, generá ideas y compartí links de aprobación.</div>
-      <div class="w-cta">
-        <button class="btn p" onclick="openCM()" style="padding:9px 18px;font-size:13px">+ Crear primer cliente</button>
-        <button class="btn" onclick="openSettings()" style="padding:9px 18px;font-size:13px">⚙ Configurar API</button>
-      </div>
-    </div>`;
+    el.innerHTML=`<div class="welcome"><div class="w-logo"><span class="w-ast">✳</span>QBIT</div><div class="w-sub">Easy CM · Content Management</div><div class="w-desc">Tu sistema de calendarios de contenido con IA integrada.</div><div class="w-cta"><button class="btn p" onclick="openCM()" style="padding:9px 18px;font-size:13px">+ Crear primer cliente</button><button class="btn" onclick="openSettings()" style="padding:9px 18px;font-size:13px">⚙ Configurar API</button></div></div>`;
     return;
   }
-
-  // Collect all calendars with client info
   let allCals=[];
-  for(const c of S.clients){
-    for(const cal of (S.cals[c.id]||[])){
-      allCals.push({...cal,clientId:c.id,clientName:c.name,clientColor:c.color});
-    }
-  }
-  const pending=allCals.filter(c=>c.status==='ready');
-  const approved=allCals.filter(c=>c.status==='approved');
+  for(const c of S.clients)for(const cal of (S.cals[c.id]||[]))allCals.push({...cal,clientId:c.id,clientName:c.name,clientColor:c.color});
+  const pending=allCals.filter(c=>c.status==='client_approved');
+  const waiting=allCals.filter(c=>c.status==='ready');
+  const final=allCals.filter(c=>c.status==='final');
   const drafts=allCals.filter(c=>c.status==='draft');
   const totalC=Object.values(S.cals).reduce((a,v)=>a+(v||[]).length,0);
+
+  const calSection=(title,icon,items,statusCls,statusLbl,actionLbl)=>items.length?`
+    <div>
+      <div class="dash-section-title">${icon} ${title}<span class="${statusCls}">${items.length}</span></div>
+      <div class="cal-rows">${items.map(cal=>`
+        <div class="cal-row" onclick="showClient('${cal.clientId}')">
+          <div class="cal-row-dot" style="background:${cal.clientColor}"></div>
+          <div class="cal-row-info"><div class="cal-row-name">${cal.clientName}</div><div class="cal-row-month">${cal.month} · ${cal.date||''}</div></div>
+          <span class="cal-row-status ${statusCls}">${statusLbl}</span>
+          <span class="cal-row-action">${actionLbl}</span>
+        </div>`).join('')}
+      </div>
+    </div>`:'';
 
   el.innerHTML=`
     <div class="dash-hero"><div class="dash-title">Dashboard</div><div class="dash-sub">Tu agencia al día</div></div>
     <div class="stats-row">
       <div class="stat"><div class="stat-lbl">Clientes</div><div class="stat-n">${S.clients.length}</div></div>
       <div class="stat"><div class="stat-lbl">Calendarios</div><div class="stat-n">${totalC}</div></div>
-      <div class="stat"><div class="stat-lbl">Por aprobar</div><div class="stat-n" style="color:var(--amber)">${pending.length}</div></div>
-      <div class="stat"><div class="stat-lbl">Aprobados</div><div class="stat-n" style="color:var(--blue)">${approved.length}</div></div>
-      <div class="stat"><div class="stat-lbl">Tokens</div><div class="stat-n" style="font-size:20px">${S.tokens.toLocaleString()}</div></div>
+      <div class="stat"><div class="stat-lbl">Por revisar</div><div class="stat-n" style="color:var(--amber)">${pending.length}</div></div>
+      <div class="stat"><div class="stat-lbl">Finalizados</div><div class="stat-n" style="color:var(--purple)">${final.length}</div></div>
+      <div class="stat"><div class="stat-lbl">Tokens</div><div class="stat-n" style="font-size:18px">${S.tokens.toLocaleString()}</div></div>
     </div>
     <div class="dash-body">
-
-      ${pending.length?`
-      <div>
-        <div class="dash-section-title">
-          🟡 Esperando aprobación del cliente
-          <span style="background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-b)">${pending.length}</span>
-        </div>
-        <div class="cal-rows">
-          ${pending.map(cal=>`
-            <div class="cal-row" onclick="showClient('${cal.clientId}')">
-              <div class="cal-row-dot" style="background:${cal.clientColor}"></div>
-              <div class="cal-row-info">
-                <div class="cal-row-name">${cal.clientName}</div>
-                <div class="cal-row-month">${cal.month} · ${cal.date||''}</div>
-              </div>
-              <span class="cal-row-status s-r">Link enviado</span>
-              <span class="cal-row-action">Ver →</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>` : ''}
-
-      ${approved.length?`
-      <div>
-        <div class="dash-section-title">
-          ✅ Aprobados por el cliente
-          <span style="background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue-b)">${approved.length}</span>
-        </div>
-        <div class="cal-rows">
-          ${approved.map(cal=>`
-            <div class="cal-row" onclick="showClient('${cal.clientId}')">
-              <div class="cal-row-dot" style="background:${cal.clientColor}"></div>
-              <div class="cal-row-info">
-                <div class="cal-row-name">${cal.clientName}</div>
-                <div class="cal-row-month">${cal.month} · ${cal.date||''}</div>
-              </div>
-              <span class="cal-row-status s-a">Aprobado</span>
-              <span class="cal-row-action">⬇ Excel →</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>` : ''}
-
-      ${drafts.length?`
-      <div>
-        <div class="dash-section-title">
-          ✏️ Borradores en progreso
-          <span style="background:var(--bg4);color:var(--text2)">${drafts.length}</span>
-        </div>
-        <div class="cal-rows">
-          ${drafts.map(cal=>`
-            <div class="cal-row" onclick="showClient('${cal.clientId}')">
-              <div class="cal-row-dot" style="background:${cal.clientColor}"></div>
-              <div class="cal-row-info">
-                <div class="cal-row-name">${cal.clientName}</div>
-                <div class="cal-row-month">${cal.month} · ${cal.date||''}</div>
-              </div>
-              <span class="cal-row-status s-d">Borrador</span>
-              <span class="cal-row-action">Continuar →</span>
-            </div>
-          `).join('')}
-        </div>
-      </div>` : ''}
-
+      ${calSection('Cliente aprobó — revisá diferencias','🔔','s-a','Revisar →',pending,'client_approved')}
+      ${calSection('Esperando aprobación del cliente','⏳',waiting,'s-r','Enviado','ready')}
+      ${calSection('Finalizados — link de diseñadora listo','✅',final,'s-f','Final','final')}
+      ${calSection('Borradores en progreso','✏️',drafts,'s-d','Borrador','draft')}
       <div>
         <div class="dash-section-title">Clientes</div>
         <div class="cgrid">
-          ${S.clients.map(c=>{
-            const cs=S.cals[c.id]||[];
-            const ha=cs.some(x=>x.status==='approved');
-            const hp=cs.some(x=>x.status==='ready');
-            return`<div class="ccard" onclick="showClient('${c.id}')">
-              <div class="cc-acc" style="background:${c.color}"></div>
-              <div class="cc-nm">${c.name}</div>
-              <div class="cc-tp">${c.type}</div>
-              <div class="cc-meta">
-                <span class="tag">${cs.length} calendarios</span>
-                ${ha?'<span class="tag b">✓ aprobado</span>':''}
-                ${hp&&!ha?'<span class="tag a">⏳ esperando</span>':''}
-              </div>
-            </div>`;
-          }).join('')}
-          <div class="add-ccard" onclick="openCM()">
-            <span style="font-size:22px;color:var(--text3)">+</span>
-            <span>Nuevo cliente</span>
-          </div>
+          ${S.clients.map(c=>{const cs=S.cals[c.id]||[];const hf=cs.some(x=>x.status==='final');const hp=cs.some(x=>x.status==='client_approved');const hw=cs.some(x=>x.status==='ready');return`<div class="ccard" onclick="showClient('${c.id}')"><div class="cc-acc" style="background:${c.color}"></div><div class="cc-nm">${c.name}</div><div class="cc-tp">${c.type}</div><div class="cc-meta"><span class="tag">${cs.length} cal</span>${hf?'<span class="tag p">✓ final</span>':''}${hp?'<span class="tag a">🔔 revisar</span>':''}${hw&&!hp?'<span class="tag g">⏳ enviado</span>':''}</div></div>`;}).join('')}
+          <div class="add-ccard" onclick="openCM()"><span style="font-size:22px;color:var(--text3)">+</span><span>Nuevo cliente</span></div>
         </div>
       </div>
-
-    </div>
-  `;
+    </div>`;
 }
 
-function renderSB(){
-  $id('cnav').innerHTML=S.clients.map(c=>`
-    <div class="sb-item" id="nav-${c.id}" onclick="showClient('${c.id}')">
-      <span class="sb-dot" style="background:${c.color}"></span>
-      <span class="sb-nm">${c.name}</span>
-    </div>
-  `).join('');
-}
-
+function renderSB(){$id('cnav').innerHTML=S.clients.map(c=>`<div class="sb-item" id="nav-${c.id}" onclick="showClient('${c.id}')"><span class="sb-dot" style="background:${c.color}"></span><span class="sb-nm">${c.name}</span></div>`).join('')}
 function renderCals(id){
-  const cs=S.cals[id]||[];
-  const el=$id('cals-list');
-  if(!cs.length){el.innerHTML='<div style="font-size:11px;color:var(--text3)">Generá tu primer calendario con Claude →</div>';return}
-  el.innerHTML=cs.map(c=>`
-    <div class="ci" onclick="loadCal('${id}','${c.id}')">
-      <div class="ci-info"><div class="ci-month">${c.month}</div><div class="ci-date">${c.date||''}</div></div>
-      <span class="cal-row-status ${c.status==='approved'?'s-a':c.status==='ready'?'s-r':'s-d'}">${c.status==='approved'?'Aprobado':c.status==='ready'?'Listo':'Borrador'}</span>
-    </div>
-  `).join('');
+  const cs=S.cals[id]||[];const el=$id('cals-list');
+  if(!cs.length){el.innerHTML='<div style="font-size:11px;color:var(--text3)">Generá tu primer calendario →</div>';return}
+  const lbl={draft:'Borrador',ready:'Enviado',client_approved:'Revisar',final:'Final'};
+  const cls={draft:'s-d',ready:'s-r',client_approved:'s-a',final:'s-f'};
+  el.innerHTML=cs.map(c=>`<div class="ci" onclick="loadCal('${id}','${c.id}')"><div class="ci-info"><div class="ci-month">${c.month}</div><div class="ci-date">${c.date||''}</div></div><span class="cal-row-status ${cls[c.status]||'s-d'}">${lbl[c.status]||'Borrador'}</span></div>`).join('');
 }
-
 function loadCal(cid,calId){
   S.activeCalId=calId;
   const cal=(S.cals[cid]||[]).find(c=>c.id===calId);
   if(!cal)return;
   $id('abar').classList.add('show');
-  if(cal.status==='approved')showAppr(cal.apprData||'');
-  else{
-    $id('appr-area').style.display='none';
-    $id('gen-btn').style.display='';
-    $id('link-area').style.display='none';
-  }
+  resetApprBar();
+  if(cal.status==='client_approved')showConflicts(cal.teraSel||{},cal.clientSel||{},cal.ideasData||{});
+  else if(cal.status==='final')showFinalArea();
+  else if(cal.status==='ready'){$id('gen-btn').style.display='none';$id('link-area').style.display='block';$id('lurl').textContent=`${location.origin}${location.pathname}?view=client&id=${calId}`;}
 }
-
 function renderApprBar(id){
   const cs=S.cals[id]||[];
-  const a=cs.find(c=>c.status==='approved');
-  const r=cs.find(c=>c.status==='ready');
-  if(a){$id('abar').classList.add('show');S.activeCalId=a.id;showAppr(a.apprData||'')}
-  else if(r){$id('abar').classList.add('show');S.activeCalId=r.id;}
+  const ca=cs.find(c=>c.status==='client_approved');
+  const cf=cs.find(c=>c.status==='final');
+  const cr=cs.find(c=>c.status==='ready');
+  if(ca){S.activeCalId=ca.id;$id('abar').classList.add('show');resetApprBar();showConflicts(ca.teraSel||{},ca.clientSel||{},ca.ideasData||{})}
+  else if(cf){S.activeCalId=cf.id;$id('abar').classList.add('show');resetApprBar();showFinalArea()}
+  else if(cr){S.activeCalId=cr.id;$id('abar').classList.add('show');resetApprBar();$id('gen-btn').style.display='none';$id('link-area').style.display='block';$id('lurl').textContent=`${location.origin}${location.pathname}?view=client&id=${cr.id}`;}
+}
+function resetApprBar(){
+  $id('gen-btn').style.display='';
+  $id('link-area').style.display='none';
+  $id('conflict-area').style.display='none';
+  $id('final-area').style.display='none';
+  $id('designer-link-area').style.display='none';
+  $id('abar-info').textContent='Cuando los copys estén listos, generá el link para el cliente.';
 }
 
 // ══════════════════════════════════════════════
 // CHAT
 // ══════════════════════════════════════════════
 function renderChat(id){
-  const msgs=S.convs[id]||[];
-  const w=$id('chat-msgs');
+  const msgs=S.convs[id]||[];const w=$id('chat-msgs');
   $id('chat-empty').style.display=msgs.length?'none':'flex';
-  w.querySelectorAll('.msg').forEach(m=>m.remove());
+  w.querySelectorAll('.msg,.msg-btn-wrap').forEach(m=>m.remove());
   msgs.forEach(m=>{if(m.role!=='system')addMsg(m.role,m.content,false)});
-  w.scrollTop=w.scrollHeight;
+  w.scrollTop=w.scrollHeight;navIdx=msgs.filter(m=>m.role==='user').length-1;
 }
-
-// ── FIX: fmt() does NOT escape HTML — we trust Claude's output
-// We sanitize only user input via addMsgSafe()
 function fmt(t){
-  // Convert markdown to HTML, allow safe HTML tags from Claude
   return t
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
     .replace(/^### (.+)$/gm,'<h3>$1</h3>')
@@ -710,26 +648,55 @@ function fmt(t){
     .replace(/\n/g,'<br>')
     .replace(/^/,'<p>').replace(/$/,'</p>');
 }
-
-// For user messages we escape HTML to prevent injection
-function escHTML(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function fmtUser(t){return '<p>'+escHTML(t).replace(/\n/g,'<br>')+'</p>'}
+function escH(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function fmtU(t){return'<p>'+escH(t).replace(/\n/g,'<br>')+'</p>'}
 
 function addMsg(role,content,scroll=true){
   const w=$id('chat-msgs');
   $id('chat-empty').style.display='none';
   const d=document.createElement('div');
   d.className=`msg ${role==='assistant'?'cl':role}`;
-  const formatted=role==='assistant'?fmt(content):fmtUser(content);
-  d.innerHTML=`<div class="msg-av ${role==='assistant'?'cl':'us'}">${role==='assistant'?'✳':'T'}</div><div class="msg-bub">${formatted}</div>`;
+  d.dataset.role=role;
+  d.innerHTML=`<div class="msg-av ${role==='assistant'?'cl':'us'}">${role==='assistant'?'✳':'T'}</div><div class="msg-bub">${role==='assistant'?fmt(content):fmtU(content)}</div>`;
   w.appendChild(d);
   if(scroll)w.scrollTop=w.scrollHeight;
 }
 
+function addActionBtn(label,cls,fn){
+  const w=$id('chat-msgs');
+  const wrap=document.createElement('div');
+  wrap.className='msg-btn-wrap';
+  wrap.style.cssText='padding:0 0 6px 34px';
+  const btn=document.createElement('button');
+  btn.className=`msg-action-btn ${cls||''}`;
+  btn.textContent=label;
+  btn.onclick=fn;
+  wrap.appendChild(btn);
+  w.appendChild(wrap);
+  w.scrollTop=w.scrollHeight;
+}
+
+function addContinueBtn(){
+  const w=$id('chat-msgs');
+  const wrap=document.createElement('div');
+  wrap.className='msg-btn-wrap';
+  wrap.style.cssText='padding:0 0 6px 34px';
+  const btn=document.createElement('button');
+  btn.className='msg-continue-btn';
+  btn.textContent='⟳ Continuar generando...';
+  btn.onclick=()=>{wrap.remove();doSend('Continuá desde donde te cortaste, sin repetir nada de lo que ya escribiste.')};
+  wrap.appendChild(btn);
+  w.appendChild(wrap);
+  w.scrollTop=w.scrollHeight;
+}
+
 function renderHints(){
   $id('hints').innerHTML=
-    ['Julio 2026','Agosto 2026','Septiembre 2026'].map(m=>`<button class="hint" onclick="ins('Armame el calendario de contenidos para ${m}')">${m}</button>`).join('')+
-    `<button class="hint" onclick="ins('Generá los copys completos de las ideas seleccionadas')">✍ Copys</button>`+
+    ['Julio 2026','Agosto 2026','Septiembre 2026'].map(m=>`<button class="hint" onclick="ins('Julio 2026'==='${m}'?'Armame el calendario para ${m}':'Armame el calendario para ${m}')">${m}</button>`).join('')+
+    `<button class="hint" onclick="openCalSel()">📅 Abrir selector</button>`;
+  // Simpler version:
+  $id('hints').innerHTML=
+    ['Julio 2026','Agosto 2026','Septiembre 2026'].map(m=>`<button class="hint" onclick="ins('Armame el calendario para ${m}')">${m}</button>`).join('')+
     `<button class="hint" onclick="openCalSel()">📅 Abrir selector</button>`;
 }
 function ins(t){const ta=$id('chat-ta');ta.value=t;ta.focus();resize(ta)}
@@ -737,38 +704,30 @@ function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();doSend()}}
 function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,160)+'px'}
 
 // ══════════════════════════════════════════════
-// SEND MESSAGE — keeps working even if user navigates
+// SEND — keeps working even if user navigates
 // ══════════════════════════════════════════════
 async function doSend(ov){
   if(!S.cfg.apiKey){showToast('Configurá tu API Key primero','err');openSettings();return}
   const id=S.cur;if(!id)return;
   const ta=$id('chat-ta');
   const txt=ov||ta.value.trim();if(!txt)return;
-  ta.value='';resize(ta);
+  if(!ov){ta.value='';resize(ta)}
   const c=getC(id);if(!c)return;
   if(!S.convs[id])S.convs[id]=[];
-  S.convs[id].push({role:'user',content:txt});
-  addMsg('user',txt);
+  if(!ov)S.convs[id].push({role:'user',content:txt});
+  if(!ov)addMsg('user',txt);
+  navIdx=S.convs[id].filter(m=>m.role==='user').length-1;
 
-  // Lock UI
   S.thinking=true;
   const btn=$id('send-btn');btn.disabled=true;btn.textContent='…';
   $id('thinking-bar').classList.add('show');
   const tid=showTyp();
 
   try{
-    const msgs=S.convs[id].map(m=>({
-      role:m.role==='assistant'?'assistant':'user',
-      content:m.content
-    }));
+    const msgs=S.convs[id].map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content}));
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-api-key':S.cfg.apiKey,
-        'anthropic-version':'2023-06-01',
-        'anthropic-dangerous-direct-browser-access':'true'
-      },
+      headers:{'Content-Type':'application/json','x-api-key':S.cfg.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({model:S.cfg.model,max_tokens:8000,system:buildSys(c),messages:msgs})
     });
     rmTyp(tid);
@@ -779,11 +738,12 @@ async function doSend(ov){
     $id('tval').textContent=S.tokens.toLocaleString();
     S.convs[id].push({role:'assistant',content:reply});
 
-    // If user navigated away, re-render chat for this client before adding message
     if(S.cur===id){
       addMsg('assistant',reply);
-    } else {
-      // Just store it — user will see it when they come back
+      // Check if response seems cut off (ends mid-sentence, no ending punctuation on last line)
+      const lastLine=reply.trim().split('\n').pop()||'';
+      const seemsCut=reply.length>3000&&!lastLine.match(/[.!?…\-—]$/)&&!lastLine.toLowerCase().includes('seleccion');
+      if(seemsCut)addContinueBtn();
     }
 
     persist();
@@ -792,63 +752,52 @@ async function doSend(ov){
 
   }catch(e){
     rmTyp(tid);
-    if(S.cur===id) addMsg('assistant',`⚠️ Error: ${e.message}. Revisá tu API Key en ⚙ Config.`);
+    if(S.cur===id)addMsg('assistant',`⚠️ Error: ${e.message}`);
   }
 
-  // Unlock UI
-  S.thinking=false;
-  btn.disabled=false;btn.textContent='↑';
+  S.thinking=false;btn.disabled=false;btn.textContent='↑';
   $id('thinking-bar').classList.remove('show');
 }
 
-function showTyp(){
-  const w=$id('chat-msgs');
-  const d=document.createElement('div');
-  const id='ty'+Date.now();
-  d.id=id;d.className='msg cl';
-  d.innerHTML=`<div class="msg-av cl">✳</div><div class="msg-bub"><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;
-  w.appendChild(d);w.scrollTop=w.scrollHeight;return id;
-}
+function showTyp(){const w=$id('chat-msgs');const d=document.createElement('div');const id='ty'+Date.now();d.id=id;d.className='msg cl';d.innerHTML=`<div class="msg-av cl">✳</div><div class="msg-bub"><div class="typing"><div class="td"></div><div class="td"></div><div class="td"></div></div></div>`;w.appendChild(d);w.scrollTop=w.scrollHeight;return id}
 function rmTyp(id){const e=$id(id);if(e)e.remove()}
 
 // ══════════════════════════════════════════════
-// SYSTEM PROMPT
+// SYSTEM PROMPT — token efficient, direct
 // ══════════════════════════════════════════════
 function buildSys(c){
-  return`Sos el asistente de content management de la agencia ${S.cfg.agency}. Trabajás con Tera, director de marketing.
+  return`Sos el asistente CM de la agencia ${S.cfg.agency}. Trabajás con Tera.
 
-CLIENTE ACTUAL:
-Nombre: ${c.name}
-Tipo: ${c.type}
-Briefing:
+CLIENTE: ${c.name} | ${c.type}
 ${c.briefing}
 
-FLUJO DE TRABAJO:
-1. INVESTIGACIÓN — verificá qué día cae el 1 del mes, feriados de Argentina, web/IG del cliente si tenés URLs
-2. PITCH DE IDEAS — 3 opciones por día de publicación. Formato EXACTO:
+MODO DE TRABAJO:
+- Respondé SIEMPRE de forma concisa. Sin introducciones, sin resúmenes finales.
+- Si tenés UNA pregunta necesaria antes de arrancar, hacela. Si no, arrancá directo.
+- Cuando generes ideas de calendario, usá EXACTAMENTE este formato por día (sin texto extra):
 
 **LUNES 7 — INSTITUCIONAL**
-Opción A: [título] — [descripción]
-Opción B: [título] — [descripción]
-Opción C: [título] — [descripción]
+A: [título] — [descripción breve]
+B: [título] — [descripción breve]
+C: [título] — [descripción breve]
 
-Días: LUNES=Identidad/Institucional, MIÉRCOLES=Know-how, VIERNES=Producto/Marca
+Días: LUNES=Identidad, MIÉRCOLES=Know-how, VIERNES=Producto/Marca.
+Feriados: marcalos y sugerí moverlos o aprovecharlos.
 
-3. Cuando el usuario envíe selección → copys completos:
-   - Texto listo para publicar, tuteo rioplatense
-   - 2-3 emojis: solo ✅ 🌱 💡 🤝 🎯 🧬 💬 📍 📦 🔬 🌿 💨 🍃 🧪
-   - Sin hashtags
-   - Descripción visual para diseñadora con recursos online (Unsplash, Pexels, Freepik + términos exactos en inglés)
+- Para copys completos (cuando el usuario envíe selección): generá de a 4 días por mensaje. Al final de cada bloque escribí exactamente: [CONTINÚA]
+  Si es el último bloque escribí: [FIN]
+  Formato de cada post:
+  **[FECHA] — [TIPO]**
+  COPY: [texto rioplatense, 2-3 emojis de ✅🌱💡🤝🎯🧬💬📍📦🔬🌿💨🍃🧪, sin hashtags]
+  DG: [descripción visual + términos de búsqueda en inglés para Unsplash/Pexels/Freepik]
 
-REGLAS: Feriados aprovecharlo temáticamente. No repetir temas/marcas ya usados. Nunca "líderes" ni "los mejores".
-Español rioplatense, directo.`;
+REGLAS: tuteo rioplatense siempre. Sin hashtags. No repetir temas/marcas usadas. Sin "líderes" ni "los mejores".`;
 }
 
 // ══════════════════════════════════════════════
-// PARSE IDEAS — detects [SELECTOR_LISTO] trigger
+// PARSE IDEAS
 // ══════════════════════════════════════════════
 function tryParse(reply,cid){
-  // Only parse if trigger present OR we find enough day blocks
   const lines=reply.split('\n');
   const blocks=[];let cur=null,opts=[];
   const TMAP={institucional:'institucional','know-how':'know-how',educación:'know-how',producto:'producto',marca:'producto',identidad:'institucional'};
@@ -857,9 +806,10 @@ function tryParse(reply,cid){
     const hm=clean.match(/^\*{0,2}([A-ZÁÉÍÓÚÑ]+)\s+(\d{1,2})(?:\s+DE\s+\w+)?\s*[—\-–]+\s*([^*\n]+)\*{0,2}$/i);
     if(hm){
       if(cur&&opts.length)blocks.push({...cur,opts:[...opts]});
-      const tp=hm[3].toLowerCase().trim().replace(/\s+/g,'-');
+      const tp=hm[3].toLowerCase().trim().replace(/[\/\s]+/g,'-');
       cur={dayNum:parseInt(hm[2]),type:TMAP[tp]||tp};opts=[];continue;
     }
+    // Accepts both "Opción A:" and "A:" formats
     const om=clean.match(/^(?:Opci[oó]n\s+)?([ABC])[:\.\)]\s*(.+)$/i);
     if(om&&cur){const raw=om[2];const p=raw.split(/\s*[—\-–]\s*/);opts.push({title:p[0]?.trim()||raw,desc:p.slice(1).join(' — ').trim()||''})}
   }
@@ -881,41 +831,34 @@ function tryParse(reply,cid){
     S.calPubs.push({key,dayNum:b.dayNum,type:b.type});
   }
   S.calHols=(HG[month]||[]).map(h=>({key:`${year}-${String(month).padStart(2,'0')}-${String(h.d).padStart(2,'0')}`,name:h.n}));
+  persist();
   $id('abar').classList.add('show');
 
-  // Add a proper clickable button message — NOT using fmt() injection
-  // Instead we append a real DOM element
   const w=$id('chat-msgs');
   $id('chat-empty').style.display='none';
-  const d=document.createElement('div');
-  d.className='msg cl';
-  d.innerHTML=`<div class="msg-av cl">✳</div><div class="msg-bub"><p>✅ Detecté <strong>${blocks.length} días</strong> con ideas para <strong>${MN[month-1]} ${year}</strong>.</p></div>`;
-  const btnWrap=document.createElement('div');
-  btnWrap.style.cssText='padding:0 0 0 34px';
+  // Remove old selector button if exists
+  w.querySelectorAll('.msg-btn-wrap').forEach(el=>{if(el.dataset.type==='selector')el.remove()});
+  const wrap=document.createElement('div');
+  wrap.className='msg-btn-wrap';wrap.dataset.type='selector';
+  wrap.style.cssText='padding:0 0 6px 34px';
   const btn=document.createElement('button');
   btn.className='msg-action-btn';
-  btn.textContent='📅 Abrir selector de calendario';
+  btn.textContent=`📅 Abrir selector — ${MN[month-1]} ${year} (${blocks.length} días)`;
   btn.onclick=openCalSel;
-  btnWrap.appendChild(btn);
-  w.appendChild(d);
-  w.appendChild(btnWrap);
-  w.scrollTop=w.scrollHeight;
+  wrap.appendChild(btn);w.appendChild(wrap);w.scrollTop=w.scrollHeight;
 }
 
 // ══════════════════════════════════════════════
 // CALENDAR SELECTOR
 // ══════════════════════════════════════════════
 function openCalSel(){
-  if(!S.calMonth){showToast('Primero pedile a Claude que genere las ideas del mes','err');return}
+  if(!S.calMonth||!S.calPubs.length){showToast('Primero pedile a Claude las ideas del mes','err');return}
   renderCalGrid();openOv('ov-cal');
 }
-
 function renderCalGrid(){
   const m=S.calMonth,y=S.calYear;
-  $id('cal-title').textContent=`Selector — ${MN[m-1]} ${y}`;
-  const fd=new Date(y,m-1,1).getDay();
-  const off=fd===0?6:fd-1;
-  const dim=new Date(y,m,0).getDate();
+  $id('cal-title').textContent=`Tu selección — ${MN[m-1]} ${y}`;
+  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
   const hols={};S.calHols.forEach(h=>hols[h.key]=h.name);
   const pubs={};S.calPubs.forEach(p=>pubs[p.key]={type:p.type});
   let html=`<div class="cal-grid">`;
@@ -932,20 +875,17 @@ function renderCalGrid(){
     if(ih)inner+=`<div class="cal-hlbl">🟡 ${hols[key]}</div>`;
     if(ip&&type){
       inner+=`<div class="cal-dtype" style="background:${col}22;color:${col};border:1px solid ${col}44">${TL[type]||type}</div>`;
-      if(hs&&ideas?.opts[sel])inner+=`<div class="cal-dsel">✓ ${ideas.opts[sel].title}</div>`;
+      if(hs&&ideas?.opts[sel])inner+=`<div class="cal-dsel" style="color:${col}">✓ ${ideas.opts[sel].title}</div>`;
       else inner+=`<div class="cal-dsel" style="color:var(--text3)">Elegir →</div>`;
     }
     const oc=ip?`onclick="openIdeas('${key}')"` :'';
     const bs=hs?`style="border-color:${col};border-width:2px"`:'';
     html+=`<div class="${cls}" ${oc} ${bs}>${inner}</div>`;
   }
-  const rem=(7-(off+dim)%7)%7;
-  for(let i=0;i<rem;i++)html+=`<div class="cal-day empty"></div>`;
+  const rem=(7-(off+dim)%7)%7;for(let i=0;i<rem;i++)html+=`<div class="cal-day empty"></div>`;
   html+=`</div>`;
-  $id('cal-wrap').innerHTML=html;
-  updProg();
+  $id('cal-wrap').innerHTML=html;updProg();
 }
-
 function updProg(){
   const tot=S.calPubs.length;
   const done=Object.keys(S.calSel).filter(k=>S.calSel[k]!==null&&S.calSel[k]!==undefined).length;
@@ -953,82 +893,69 @@ function updProg(){
   $id('prog-txt').textContent=`${done} / ${tot} elegidas`;
 }
 
-// ══════════════════════════════════════════════
 // IDEAS PICKER
-// ══════════════════════════════════════════════
+let tempSel=null;
 function openIdeas(key){
   S.activeDayKey=key;tempSel=S.calSel[key]??null;
   const ideas=S.calIdeas[key];if(!ideas?.opts)return;
-  const[,m,d]=key.split('-');
-  const type=ideas.type;const col=TC[type]||'#888';
+  const[,m,d]=key.split('-');const type=ideas.type;const col=TC[type]||'#888';
   $id('ideas-title').innerHTML=`${parseInt(d)} de ${MN[parseInt(m)-1]} — <span style="color:${col}">${TL[type]||type}</span>`;
   $id('ideas-body').innerHTML=ideas.opts.map((o,i)=>`
     <div class="idea-card ${tempSel===i?'selected':''}" id="ic-${i}" onclick="selI(${i})" style="${tempSel===i?`border-color:${col};border-width:2px`:''}">
       <div class="idea-letter" style="color:${col}">${'ABC'[i]}</div>
       <div class="idea-title">${o.title}</div>
       ${o.desc?`<div class="idea-desc">${o.desc}</div>`:''}
-    </div>
-  `).join('');
+    </div>`).join('');
   openOv('ov-ideas');
 }
-
 function selI(i){
-  tempSel=i;
-  const col=TC[S.calIdeas[S.activeDayKey]?.type]||'#888';
-  document.querySelectorAll('.idea-card').forEach((c,idx)=>{
-    c.className='idea-card'+(idx===i?' selected':'');
-    c.style.borderColor=idx===i?col:'';
-    c.style.borderWidth=idx===i?'2px':'';
-  });
+  tempSel=i;const col=TC[S.calIdeas[S.activeDayKey]?.type]||'#888';
+  document.querySelectorAll('.idea-card').forEach((c,idx)=>{c.className='idea-card'+(idx===i?' selected':'');c.style.borderColor=idx===i?col:'';c.style.borderWidth=idx===i?'2px':''});
 }
-
 function confirmIdea(){
   if(tempSel===null){showToast('Elegí una opción','err');return}
-  S.calSel[S.activeDayKey]=tempSel;
-  closeOv('ov-ideas');renderCalGrid();
+  S.calSel[S.activeDayKey]=tempSel;persist();closeOv('ov-ideas');renderCalGrid();
 }
 
 // ══════════════════════════════════════════════
-// SEND SELECTION
+// SEND SELECTION → request copys in blocks of 4
 // ══════════════════════════════════════════════
 function sendSel(){
   const m=S.calMonth,y=S.calYear;
-  const lines=[`Selección para ${MN[m-1]} ${y}:\n`];
+  const sel=[];
   for(const{key,dayNum,type}of S.calPubs){
-    const sel=S.calSel[key];const ideas=S.calIdeas[key];
-    if(sel===undefined||sel===null||!ideas)continue;
-    const o=ideas.opts[sel];
-    lines.push(`• ${dayNum}/${m} (${TL[type]||type}) — Opción ${'ABC'[sel]}: ${o.title}${o.desc?' — '+o.desc:''}`);
+    const s=S.calSel[key];const ideas=S.calIdeas[key];
+    if(s===undefined||s===null||!ideas)continue;
+    const o=ideas.opts[s];
+    sel.push(`${dayNum}/${m} (${TL[type]||type}) — ${['A','B','C'][s]}: ${o.title}${o.desc?' — '+o.desc:''}`);
   }
-  lines.push('\nRedactame los copys completos de cada publicación con texto del post y descripción visual para la diseñadora.');
-  const calId='cal_'+Date.now();
-  S.activeCalId=calId;
+  if(!sel.length){showToast('Elegí al menos una idea primero','err');return}
+  const calId='cal_'+Date.now();S.activeCalId=calId;
   if(!S.cals[S.cur])S.cals[S.cur]=[];
-  S.cals[S.cur].push({id:calId,month:`${MN[m-1]} ${y}`,status:'draft',date:new Date().toLocaleDateString('es-AR'),sel:JSON.parse(JSON.stringify(S.calSel)),ideasData:JSON.parse(JSON.stringify(S.calIdeas))});
+  S.cals[S.cur].push({id:calId,month:`${MN[m-1]} ${y}`,status:'draft',date:new Date().toLocaleDateString('es-AR'),teraSel:JSON.parse(JSON.stringify(S.calSel)),ideasData:JSON.parse(JSON.stringify(S.calIdeas))});
   persist();renderCals(S.cur);closeOv('ov-cal');
-  doSend(lines.join('\n'));
+  const msg=`Selección de Tera para ${MN[m-1]} ${y}:\n${sel.join('\n')}\n\nGenerá los copys completos de a 4 por mensaje. Empezá ya.`;
+  doSend(msg);
 }
 
 // ══════════════════════════════════════════════
 // GENERATE CLIENT LINK
 // ══════════════════════════════════════════════
-async function genLink(){
-  if(!sb){showToast('Configurá Supabase primero en ⚙ Config','err');return}
+async function genClientLink(){
+  if(!sb){showToast('Configurá Supabase primero','err');return}
   const calId=S.activeCalId||(S.cals[S.cur]?.slice(-1)[0]?.id);
   if(!calId){showToast('Primero generá un calendario','err');return}
   const c=getC(S.cur);
-  const conv=S.convs[S.cur]||[];
-  const last=[...conv].reverse().find(m=>m.role==='assistant');
-  const html=buildCP(c,last?.content||'Sin contenido.',calId);
+  const cal=(S.cals[S.cur]||[]).find(x=>x.id===calId);
+  const html=buildClientHTML(c,calId,cal?.teraSel||S.calSel,S.calIdeas,S.calPubs,S.calHols,cal?.month||'');
   const btn=$id('gen-btn');btn.textContent='Generando…';btn.disabled=true;
   try{
     const{error}=await sb.from('client_pages').upsert({id:calId,client_id:S.cur,client_name:c.name,html,created_at:new Date().toISOString()});
     if(error)throw error;
     listenAppr(calId);
     const link=`${location.origin}${location.pathname}?view=client&id=${calId}`;
-    $id('lurl').textContent=link;
-    $id('link-area').style.display='block';
-    const cal=S.cals[S.cur]?.find(x=>x.id===calId);
+    $id('lurl').textContent=link;$id('link-area').style.display='block';
+    $id('gen-btn').style.display='none';
     if(cal){cal.status='ready';persist();renderCals(S.cur);renderDash();}
     showToast('Link generado ✓','ok');
   }catch(e){showToast('Error: '+e.message,'err')}
@@ -1039,106 +966,365 @@ function copyLink(){navigator.clipboard.writeText($id('lurl').textContent);showT
 
 function listenAppr(calId){
   if(!sb)return;
-  sb.channel('appr-'+calId)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'approvals',filter:`id=eq.${calId}`},p=>{
-      const d=p.new?.data||'';
-      const cal=S.cals[S.cur]?.find(c=>c.id===calId);
-      if(cal){cal.status='approved';cal.apprData=d;persist();renderCals(S.cur);renderDash();}
-      showAppr(d);
-      showToast('✓ El cliente aprobó el calendario','ok');
-    }).subscribe();
+  sb.channel('appr-'+calId).on('postgres_changes',{event:'INSERT',schema:'public',table:'approvals',filter:`id=eq.${calId}`},p=>{
+    const raw=p.new?.data||'{}';
+    let clientSel={};try{clientSel=JSON.parse(raw)}catch(e){clientSel={comments:raw}}
+    const cal=S.cals[S.cur]?.find(c=>c.id===calId);
+    if(cal){cal.status='client_approved';cal.clientSel=clientSel;persist();renderCals(S.cur);renderDash();}
+    showConflicts(cal?.teraSel||S.calSel,clientSel,S.calIdeas);
+    showToast('✓ El cliente aprobó. Revisá las diferencias','ok');
+  }).subscribe();
 }
 
-function showAppr(data){
+// ══════════════════════════════════════════════
+// CONFLICT REVIEW
+// ══════════════════════════════════════════════
+// conflictRes: {key -> 'tera'|'cliente'}
+let conflictRes={};
+
+function showConflicts(teraSel,clientSel,ideasData){
+  $id('conflict-area').style.display='block';
   $id('gen-btn').style.display='none';
   $id('link-area').style.display='none';
-  $id('appr-area').style.display='block';
-  $id('appr-detail').textContent=data||'Aprobado.';
-  $id('abar-info').textContent='✓ Calendario aprobado';
-}
+  $id('abar-info').textContent='El cliente aprobó el calendario.';
+  conflictRes={};
 
-function clearAppr(){
-  if(!S.activeCalId)return;
-  const cal=S.cals[S.cur]?.find(c=>c.id===S.activeCalId);
-  if(cal){cal.status='ready';cal.apprData='';persist();renderCals(S.cur);renderDash();}
-  $id('appr-area').style.display='none';
-  $id('gen-btn').style.display='';
-  $id('link-area').style.display='none';
-  $id('abar-info').textContent='Cuando los copys estén listos, generá el link para el cliente.';
-}
-
-// ══════════════════════════════════════════════
-// EXCEL
-// ══════════════════════════════════════════════
-function doExcel(){
-  const c=getC(S.cur);if(!c)return;
-  const conv=S.convs[S.cur]||[];
-  const last=[...conv].reverse().find(m=>m.role==='assistant');
-  const cal=S.cals[S.cur]?.find(x=>x.id===S.activeCalId)||(S.cals[S.cur]||[]).find(x=>x.status==='approved');
-  const ml=cal?.month||'Calendario';
-  const wb=XLSX.utils.book_new();
-  const rows=[
-    [`CALENDARIO — ${c.name.toUpperCase()} — ${ml.toUpperCase()}`,'','','','','',''],
-    ['LUNES','MARTES','MIÉRCOLES','JUEVES','VIERNES','SÁBADO','DOMINGO']
-  ];
-  const content=last?.content||'';
-  const row=['','','','','','',''];
-  const sections=content.split(/(?=\*\*(?:LUNES|MARTES|MIÉRCOLES|JUEVES|VIERNES))/gi);
-  for(const sec of sections){
-    const dm=sec.match(/\*\*([A-ZÁÉÍÓÚÑ]+)\s+\d+/i);if(!dm)continue;
-    const col={lun:0,mar:1,mié:2,mie:2,jue:3,vie:4}[dm[1].toLowerCase().substring(0,3)];
-    if(col===undefined)continue;
-    row[col]=sec.replace(/\*\*/g,'').trim().substring(0,800);
+  // Build conflict list
+  const conflicts=[];
+  const allKeys=new Set([...Object.keys(teraSel),...Object.keys(clientSel)]);
+  for(const key of allKeys){
+    const ts=teraSel[key];const cs=clientSel[key];
+    if(ts===undefined||ts===null)continue;// Tera didn't pick this day
+    if(cs===undefined||cs===null){conflictRes[key]='tera';continue;}// Client didn't pick, keep Tera
+    if(ts===cs){conflictRes[key]='tera';continue;}// Same — no conflict
+    conflicts.push({key,ts,cs});
   }
-  rows.push(row);
-  rows.push(['Indicaciones DG\n\n[ PEGAR DISEÑO AQUÍ ]','','','','','','']);
-  const ws=XLSX.utils.aoa_to_sheet(rows);
-  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:6}}];
-  ws['!cols']=Array(7).fill({wch:30});
-  ws['!rows']=[{hpt:20},{hpt:16},{hpt:160},{hpt:100}];
-  XLSX.utils.book_append_sheet(wb,ws,'Calendario');
-  XLSX.writeFile(wb,`${c.name.replace(/\s+/g,'-')}-${ml}.xlsx`);
-  showToast('Excel descargado ✓','ok');
+
+  if(!conflicts.length){
+    $id('conflict-list').innerHTML='<div style="font-size:12px;color:var(--green);padding:8px 0">✓ El cliente eligió lo mismo que vos en todos los días. Podés aprobar directamente.</div>';
+  } else {
+    $id('conflict-list').innerHTML=conflicts.map(({key,ts,cs})=>{
+      const[y,m,d]=key.split('-');const ideas=ideasData[key]||S.calIdeas[key];const type=ideas?.type;const col=TC[type]||'#888';
+      const tOpt=ideas?.opts[ts];const cOpt=ideas?.opts[cs];
+      conflictRes[key]='tera';// default to Tera
+      return`<div class="conflict-card">
+        <div class="conflict-title">${parseInt(d)} de ${MN[parseInt(m)-1]} — ${TL[type]||type}</div>
+        <div class="conflict-row">
+          <div class="conflict-opt tera selected-tera" id="cr-t-${key.replace(/-/g,'_')}" onclick="pickConflict('${key}','tera')">
+            <div class="conflict-label tera">✳ Selección de Tera</div>
+            <strong>${tOpt?.title||'—'}</strong>${tOpt?.desc?`<br><span style="font-size:10px;color:var(--text2)">${tOpt.desc}</span>`:''}
+          </div>
+          <div class="conflict-opt cliente" id="cr-c-${key.replace(/-/g,'_')}" onclick="pickConflict('${key}','cliente')">
+            <div class="conflict-label cliente">👤 Selección del cliente</div>
+            <strong>${cOpt?.title||'—'}</strong>${cOpt?.desc?`<br><span style="font-size:10px;color:var(--text2)">${cOpt.desc}</span>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function pickConflict(key,who){
+  conflictRes[key]=who;
+  const k=key.replace(/-/g,'_');
+  const te=$id('cr-t-'+k);const ce=$id('cr-c-'+k);
+  if(te&&ce){te.className='conflict-opt tera'+(who==='tera'?' selected-tera':'');ce.className='conflict-opt cliente'+(who==='cliente'?' selected-cliente':'')}
+}
+
+function finalApprove(){
+  // Merge: apply conflict resolution into final selection
+  S.finalSel={...conflictRes};
+  const calId=S.activeCalId;
+  const cal=S.cals[S.cur]?.find(c=>c.id===calId);
+  if(cal){cal.status='final';cal.finalSel=S.finalSel;persist();renderCals(S.cur);renderDash();}
+  showFinalArea();
+  showToast('Calendario final aprobado ✓','ok');
+}
+
+function showFinalArea(){
+  $id('conflict-area').style.display='none';
+  $id('gen-btn').style.display='none';
+  $id('link-area').style.display='none';
+  $id('final-area').style.display='block';
+  $id('abar-info').textContent='✓ Calendario final aprobado';
 }
 
 // ══════════════════════════════════════════════
-// CLIENT PAGE
+// DESIGNER LINK
 // ══════════════════════════════════════════════
-function buildCP(client,content,calId){
+async function genDesignerLink(){
+  if(!sb){showToast('Configurá Supabase primero','err');return}
+  const calId=S.activeCalId;if(!calId)return;
+  const c=getC(S.cur);
+  const cal=S.cals[S.cur]?.find(x=>x.id===calId);
+  const finalSel=cal?.finalSel||S.finalSel;
+  const html=buildDesignerHTML(c,calId,finalSel,S.calIdeas,S.calPubs,S.calHols,cal?.month||'');
+  const designerId='dg_'+calId;
+  try{
+    const{error}=await sb.from('client_pages').upsert({id:designerId,client_id:S.cur,client_name:c.name+' [DG]',html,created_at:new Date().toISOString()});
+    if(error)throw error;
+    const link=`${location.origin}${location.pathname}?view=client&id=${designerId}`;
+    $id('designer-lurl').textContent=link;
+    $id('designer-link-area').style.display='block';
+    showToast('Link de diseñadora generado ✓','ok');
+  }catch(e){showToast('Error: '+e.message,'err')}
+}
+function copyDesignerLink(){navigator.clipboard.writeText($id('designer-lurl').textContent);showToast('Copiado ✓','ok')}
+function clearAppr(){
+  resetApprBar();
+  const cal=S.cals[S.cur]?.find(c=>c.id===S.activeCalId);
+  if(cal&&cal.status!=='final'){cal.status='ready';persist();renderCals(S.cur);renderDash();}
+  $id('gen-btn').style.display='';
+}
+
+// ══════════════════════════════════════════════
+// BUILD CLIENT PAGE — interactive calendar
+// ══════════════════════════════════════════════
+function buildClientHTML(client,calId,teraSel,calIdeas,calPubs,calHols,monthLabel){
   const ag=S.cfg.agency||'QBIT';
-  const safeContent=content
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
-  return`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${client.name} — Calendario | ${ag}</title><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script><style>*{box-sizing:border-box;margin:0;padding:0}:root{--a:${client.color};--bg:#f7f7f5;--bg2:#fff;--t:#111;--t2:#555;--t3:#999;--br:#e5e5e5;--f:system-ui,sans-serif}body{background:var(--bg);color:var(--t);font-family:var(--f);min-height:100vh}.hdr{background:var(--bg2);border-bottom:1px solid var(--br);padding:16px 32px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:10}.dot{width:10px;height:10px;border-radius:50%;background:var(--a)}.hnm{font-size:16px;font-weight:600}.hby{font-size:11px;color:var(--t3);margin-left:auto}.main{max-width:780px;margin:32px auto;padding:0 20px}.st{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--t3);margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--br)}.card{background:var(--bg2);border:1px solid var(--br);border-radius:10px;padding:28px;margin-bottom:24px;font-size:14px;line-height:1.85;color:var(--t)}.card strong{font-weight:600}.ta{width:100%;border:1px solid var(--br);border-radius:8px;padding:14px;font-family:var(--f);font-size:13px;color:var(--t);background:var(--bg2);resize:vertical;min-height:100px;outline:none;transition:border-color .15s}.ta:focus{border-color:var(--a)}.abar{position:sticky;bottom:0;background:var(--bg2);border-top:1px solid var(--br);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px}.abtn{background:var(--a);color:#fff;border:none;border-radius:8px;padding:11px 24px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--f);transition:opacity .15s}.abtn:hover{opacity:.85}.abtn:disabled{opacity:.4;cursor:not-allowed}.ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:16px;text-align:center;font-weight:600;color:#2e7d32;font-size:15px;display:none;margin-bottom:20px}.ftr{text-align:center;padding:32px;font-size:11px;color:var(--t3);border-top:1px solid var(--br);margin-top:32px}<\/style></head><body>
-<div class="hdr"><div class="dot"></div><div><div class="hnm">${client.name}</div><div style="font-size:11px;color:var(--t3)">Propuesta de contenidos</div></div><div class="hby">Preparado por ${ag}</div></div>
-<div class="main"><div id="ok" class="ok">✓ ¡Aprobado! Tu agencia ya fue notificada.</div><div class="st">Propuesta de contenidos</div><div class="card">${safeContent}</div><div class="st" style="margin-top:24px">Tus comentarios</div><textarea id="cmts" class="ta" placeholder="¿Algún cambio o comentario? (opcional)"></textarea></div>
-<div class="abar"><div style="font-size:13px;color:var(--t2)">¿Todo bien con el calendario?</div><button class="abtn" id="abtn" onclick="appr()">✓ Aprobar calendario</button></div>
+  const m=S.calMonth,y=S.calYear;
+  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
+  const hols={};calHols.forEach(h=>hols[h.key]=h.name);
+  const pubs={};calPubs.forEach(p=>pubs[p.key]={type:p.type});
+
+  let calGridHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:16px;">`;
+  const dayNames=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  dayNames.forEach(d=>{calGridHTML+=`<div style="text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;padding:6px 0">${d}</div>`});
+  for(let i=0;i<off;i++)calGridHTML+=`<div></div>`;
+
+  const TC2={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educación:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
+  const TL2={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educación:'Know-how',producto:'Producto',marca:'Producto'};
+  const MN2=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  // Serialize ideas for JS
+  const ideasJSON=JSON.stringify(calIdeas).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
+  const teraSelJSON=JSON.stringify(teraSel).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
+
+  for(let d=1;d<=dim;d++){
+    const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ip=!!pubs[key],ih=!!hols[key];
+    const type=calIdeas[key]?.type||pubs[key]?.type;
+    const col=TC2[type]||'#888';
+    const isTera=teraSel[key]!==undefined&&teraSel[key]!==null;
+    const teraIdx=teraSel[key];
+    const teraOpt=isTera&&calIdeas[key]?.opts?.[teraIdx];
+
+    let style=`min-height:72px;border-radius:6px;padding:5px;border:1px solid #e5e5e5;background:#fff;`;
+    if(ih)style=`min-height:72px;border-radius:6px;padding:5px;border:1px solid #fbbf2444;background:#fffbeb;`;
+    let inner=`<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:3px">${d}</div>`;
+    if(ih)inner+=`<div style="font-size:8px;color:#b45309">🟡 ${hols[key]}</div>`;
+    if(ip&&type){
+      inner+=`<div style="font-size:8px;padding:2px 4px;border-radius:3px;background:${col}22;color:${col};border:1px solid ${col}44;display:inline-block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">${TL2[type]||type}</div>`;
+      if(isTera&&teraOpt)inner+=`<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:2px">⭐ ${teraOpt.title}</div>`;
+      inner+=`<div style="font-size:9px;color:${col};cursor:pointer;text-decoration:underline" onclick="openDay('${key}')">Ver opciones</div>`;
+    }
+    const clickable=ip?`onclick="openDay('${key}')" style="${style}cursor:pointer"`:`style="${style}"`;
+    calGridHTML+=`<div id="day-${key.replace(/-/g,'_')}" ${clickable}>${inner}</div>`;
+  }
+  const rem=(7-(off+dim)%7)%7;for(let i=0;i<rem;i++)calGridHTML+=`<div></div>`;
+  calGridHTML+=`</div>`;
+
+  return`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${client.name} — Calendario | ${ag}</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
+<style>*{box-sizing:border-box;margin:0;padding:0}:root{--a:${client.color}}body{background:#f7f7f5;color:#111;font-family:system-ui,sans-serif;min-height:100vh}.hdr{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}.dot{width:10px;height:10px;border-radius:50%;background:var(--a)}.hnm{font-size:16px;font-weight:600}.hby{font-size:11px;color:#999;margin-left:auto}.main{max-width:860px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:20px}.card-hdr{padding:12px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}.prog-wrap{display:flex;align-items:center;gap:10px;font-size:11px;color:#888}.prog-bar{width:140px;height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden}.prog-fill{height:100%;background:var(--a);border-radius:2px;transition:width .3s}.abar{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5e5e5;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px}.abtn{background:var(--a);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}.abtn:hover{opacity:.85}.abtn:disabled{opacity:.4;cursor:not-allowed}.ftr{text-align:center;padding:28px;font-size:11px;color:#999;border-top:1px solid #e5e5e5;margin-top:20px}
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}.modal-bg.open{display:flex}.modal-box{background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:88vh;overflow-y:auto}.modal-hdr{padding:16px 20px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}.modal-x{background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1}.idea{border:2px solid #e5e5e5;border-radius:8px;padding:12px;margin:0 20px 10px;cursor:pointer;transition:all .15s}.idea:hover{border-color:#bbb}.idea.tera-sel{border-color:var(--a);background:#f0fdf4}.idea.selected{border-width:2px}.idea-ltr{font-size:9px;font-weight:700;letter-spacing:1px;margin-bottom:4px}.idea-ttl{font-size:13px;font-weight:600;margin-bottom:2px}.idea-dsc{font-size:11px;color:#777}.tera-badge{font-size:9px;background:#dcfce7;color:#166534;padding:2px 7px;border-radius:10px;margin-left:6px}.ok-msg{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:14px;text-align:center;font-weight:600;color:#2e7d32;font-size:15px;display:none;margin-bottom:16px}
+<\/style></head><body>
+<div class="hdr"><div class="dot"></div><div><div class="hnm">${client.name}</div><div style="font-size:11px;color:#999">Calendario de contenidos — ${monthLabel}</div></div><div class="hby">por ${ag}</div></div>
+<div class="main">
+  <div id="ok-msg" class="ok-msg">✓ ¡Aprobación enviada! Tu agencia ya fue notificada.</div>
+  <div class="card">
+    <div class="card-hdr">
+      <div style="font-size:12px;font-weight:500">Elegí el contenido de cada día</div>
+      <div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" id="cli-prog" style="width:0%"></div></div><span id="cli-prog-txt">0 / 0</span></div>
+    </div>
+    ${calGridHTML}
+  </div>
+  <div style="font-size:12px;color:#777;margin-bottom:16px;padding:0 4px">⭐ = Sugerido por ${ag} · Podés elegir cualquier opción o confirmar la sugerencia.</div>
+</div>
+<div class="abar"><div style="font-size:13px;color:#555">¿Todo listo con el calendario?</div><button class="abtn" id="abtn" onclick="submitApproval()">✓ Enviar aprobación</button></div>
 <div class="ftr">Preparado por <strong>${ag}</strong> para ${client.name}</div>
-<!--FUTURO: POST /api/generate-image {calId:'${calId}',copy:selectedCopy} mostrar img bajo el copy aprobado-->
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal-box">
+    <div class="modal-hdr"><div id="modal-title" style="font-size:14px;font-weight:600">—</div><button class="modal-x" onclick="closeModal()">×</button></div>
+    <div style="height:12px"></div>
+    <div id="modal-body"></div>
+    <div style="padding:12px 20px 16px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f0f0f0;margin-top:8px">
+      <button onclick="closeModal()" style="padding:7px 14px;border-radius:6px;border:1px solid #ddd;background:transparent;cursor:pointer;font-size:12px">Cancelar</button>
+      <button onclick="confirmDay()" style="padding:7px 14px;border-radius:6px;border:none;background:var(--a);color:#fff;cursor:pointer;font-size:12px;font-weight:600">Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <script>
-let sb2=null;try{sb2=supabase.createClient('${S.cfg.sbUrl}','${S.cfg.sbKey}')}catch(e){}
-async function appr(){const btn=document.getElementById('abtn');const c=document.getElementById('cmts').value.trim();btn.disabled=true;btn.textContent='Enviando…';try{if(sb2)await sb2.from('approvals').upsert({id:'${calId}',data:c||'Aprobado sin comentarios.',approved_at:new Date().toISOString()});document.getElementById('ok').style.display='block';btn.textContent='✓ Aprobado';window.scrollTo({top:0,behavior:'smooth'})}catch(e){btn.disabled=false;btn.textContent='✓ Aprobar calendario';alert('Error: '+e.message)}}
-<\/script></body></html>`;
+const CAL_ID='${calId}';
+const SB_URL='${S.cfg.sbUrl}';
+const SB_KEY='${S.cfg.sbKey}';
+const CLIENT_COLOR='${client.color}';
+const TERA_SEL=${teraSelJSON};
+const IDEAS=${ideasJSON};
+const PUBS=${JSON.stringify(calPubs).replace(/</g,'\\u003c').replace(/>/g,'\\u003e')};
+const MN=${JSON.stringify(MN2)};
+const TL=${JSON.stringify(TL2)};
+const TC=${JSON.stringify(TC2)};
+
+let clientSel={...TERA_SEL};// start with Tera's picks
+let activeKey=null,tempIdx=null;
+let sb2=null;try{sb2=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
+
+// Init — pre-fill with Tera's selections and update visual
+document.addEventListener('DOMContentLoaded',()=>{
+  for(const[key,idx]of Object.entries(TERA_SEL)){if(idx!==null&&idx!==undefined)updateDayUI(key,idx)}
+  updateProg();
+});
+
+function openDay(key){
+  activeKey=key;tempIdx=clientSel[key]??null;
+  const ideas=IDEAS[key];if(!ideas?.opts)return;
+  const[,m,d]=key.split('-');const type=ideas.type;const col=TC[type]||'#888';
+  const isTera=(i)=>TERA_SEL[key]===i;
+  document.getElementById('modal-title').innerHTML=parseInt(d)+' de '+MN[parseInt(m)-1]+' — <span style="color:'+col+'">'+( TL[type]||type)+'</span>';
+  document.getElementById('modal-body').innerHTML=ideas.opts.map((o,i)=>`
+    <div class="idea ${isTera(i)?'tera-sel':''} ${tempIdx===i?'selected':''}" id="mi-${i}" onclick="selIdea(${i})" style="${tempIdx===i?'border-color:'+col+';':isTera(i)?'border-color:'+col+'99;':''}">
+      <div class="idea-ltr" style="color:${col}">${['A','B','C'][i]}${isTera(i)?'<span class="tera-badge">⭐ Sugerido por ${ag}</span>':''}</div>
+      <div class="idea-ttl">${o.title}</div>
+      ${o.desc?'<div class="idea-dsc">'+o.desc+'</div>':''}
+    </div>`).join('');
+  document.getElementById('modal-bg').classList.add('open');
+}
+function selIdea(i){
+  tempIdx=i;const ideas=IDEAS[activeKey];const col=TC[ideas?.type]||'#888';
+  document.querySelectorAll('[id^="mi-"]').forEach((el,idx)=>{
+    const isTera=TERA_SEL[activeKey]===idx;
+    el.className='idea'+(isTera?' tera-sel':'')+(idx===i?' selected':'');
+    el.style.borderColor=idx===i?col:isTera?col+'99':'#e5e5e5';
+  });
+}
+function confirmDay(){
+  if(tempIdx===null)return;
+  clientSel[activeKey]=tempIdx;
+  updateDayUI(activeKey,tempIdx);
+  updateProg();closeModal();
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open')}
+function updateDayUI(key,idx){
+  const el=document.getElementById('day-'+key.replace(/-/g,'_'));if(!el)return;
+  const ideas=IDEAS[key];if(!ideas?.opts)return;
+  const opt=ideas.opts[idx];const type=ideas.type;const col=TC[type]||'#888';
+  const isTera=TERA_SEL[key]===idx;
+  const selDiv=el.querySelector('[data-sel]')||el;
+  // Update the "ver opciones" line to show selection
+  const links=el.querySelectorAll('[style*="cursor:pointer"]');
+  links.forEach(l=>{l.textContent='✓ '+opt.title;l.style.color=col;l.style.fontStyle='normal';l.style.textDecoration='none'});
+  el.style.borderColor=col;el.style.borderWidth='2px';
+}
+function updateProg(){
+  const tot=PUBS.length;
+  const done=Object.keys(clientSel).filter(k=>clientSel[k]!==null&&clientSel[k]!==undefined).length;
+  const pct=tot?Math.round(done/tot*100):0;
+  document.getElementById('cli-prog').style.width=pct+'%';
+  document.getElementById('cli-prog-txt').textContent=done+' / '+tot;
+}
+async function submitApproval(){
+  const btn=document.getElementById('abtn');
+  btn.disabled=true;btn.textContent='Enviando…';
+  try{
+    if(sb2){await sb2.from('approvals').upsert({id:CAL_ID,data:JSON.stringify(clientSel),approved_at:new Date().toISOString()})}
+    document.getElementById('ok-msg').style.display='block';
+    btn.textContent='✓ Enviado';
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){btn.disabled=false;btn.textContent='✓ Enviar aprobación';alert('Error: '+e.message)}
+}
+<\/script>
+<!--FUTURO: generar imagen al confirmar opción → POST /api/generate-image {calId,copy} → mostrar img bajo la opción-->
+</body></html>`;
 }
 
 // ══════════════════════════════════════════════
-// CLIENT VIEW (for ?view=client&id=xxx)
+// BUILD DESIGNER PAGE — read only, final only
+// ══════════════════════════════════════════════
+function buildDesignerHTML(client,calId,finalSel,calIdeas,calPubs,calHols,monthLabel){
+  const ag=S.cfg.agency||'QBIT';
+  const m=S.calMonth,y=S.calYear;
+  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
+  const hols={};calHols.forEach(h=>hols[h.key]=h.name);
+  const TC2={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educación:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
+  const TL2={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educación:'Know-how',producto:'Producto',marca:'Producto'};
+  const MN2=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+  let calHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:16px">`;
+  ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(d=>{calHTML+=`<div style="text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;padding:6px 0">${d}</div>`});
+  for(let i=0;i<off;i++)calHTML+=`<div></div>`;
+  for(let d=1;d<=dim;d++){
+    const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ih=!!hols[key];const sel=finalSel[key];
+    const ideas=calIdeas[key];const hasPub=!!ideas;
+    const type=ideas?.type;const col=TC2[type]||'#888';const opt=hasPub&&sel!==undefined&&sel!==null?ideas?.opts?.[sel]:null;
+    let s=`min-height:80px;border-radius:6px;padding:7px;border:1px solid;`;
+    if(ih)s+=`border-color:#fbbf2444;background:#fffbeb;`;
+    else if(hasPub&&opt)s+=`border-color:${col};background:${col}11;`;
+    else s+=`border-color:#e5e5e5;background:#fff;`;
+    let inner=`<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:3px">${d}</div>`;
+    if(ih)inner+=`<div style="font-size:8px;color:#b45309">🟡 ${hols[key]}</div>`;
+    if(hasPub&&opt){
+      inner+=`<div style="font-size:8px;padding:2px 4px;border-radius:3px;background:${col}22;color:${col};border:1px solid ${col}44;display:inline-block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">${TL2[type]||type}</div>`;
+      inner+=`<div style="font-size:10px;font-weight:600;color:#111;margin-bottom:2px">${opt.title}</div>`;
+      if(opt.desc)inner+=`<div style="font-size:9px;color:#666;line-height:1.4">${opt.desc}</div>`;
+    } else if(hasPub){
+      inner+=`<div style="font-size:9px;color:#bbb">Sin selección</div>`;
+    }
+    calHTML+=`<div style="${s}">${inner}</div>`;
+  }
+  const rem=(7-(off+dim)%7)%7;for(let i=0;i<rem;i++)calHTML+=`<div></div>`;
+  calHTML+=`</div>`;
+
+  // Posts list for DG
+  let postsList='';
+  for(const{key,dayNum,type}of calPubs){
+    const sel=finalSel[key];const ideas=calIdeas[key];
+    if(sel===undefined||sel===null||!ideas)continue;
+    const opt=ideas.opts[sel];if(!opt)continue;
+    const[,mo,d]=key.split('-');const col=TC2[type]||'#888';
+    postsList+=`<div style="background:#fff;border:1px solid #e5e5e5;border-left:3px solid ${col};border-radius:6px;padding:14px;margin-bottom:12px">
+      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:${col};margin-bottom:6px">${parseInt(d)}/${parseInt(mo)} · ${TL2[type]||type}</div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${opt.title}</div>
+      ${opt.desc?`<div style="font-size:12px;color:#555;margin-bottom:8px">${opt.desc}</div>`:''}
+      <div style="background:#f7f7f5;border-radius:4px;padding:10px;font-size:11px;color:#777">[ PEGAR DISEÑO AQUÍ ]</div>
+    </div>`;
+  }
+
+  return`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${client.name} — Para Diseñadora | ${ag}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f7f7f5;color:#111;font-family:system-ui,sans-serif;min-height:100vh}.hdr{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;align-items:center;gap:12px}.dot{width:10px;height:10px;border-radius:50%;background:${client.color}}.hnm{font-size:16px;font-weight:600}.hby{font-size:11px;color:#999;margin-left:auto}.badge{font-size:10px;padding:4px 10px;border-radius:10px;background:#ede9fe;color:#7c3aed;border:1px solid #c4b5fd;font-weight:600}.main{max-width:860px;margin:24px auto;padding:0 16px}.st{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e5e5e5}.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:24px}.ftr{text-align:center;padding:28px;font-size:11px;color:#999;border-top:1px solid #e5e5e5;margin-top:20px}<\/style></head><body>
+<div class="hdr"><div class="dot"></div><div><div class="hnm">${client.name}</div><div style="font-size:11px;color:#999">Calendario aprobado — ${monthLabel}</div></div><div class="hby"><span class="badge">🎨 Para diseñadora</span></div></div>
+<div class="main">
+  <div class="card">
+    <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:500">Vista de calendario</div>
+    ${calHTML}
+  </div>
+  <div class="st">Contenidos aprobados</div>
+  ${postsList||'<div style="color:#999;font-size:12px">Sin contenidos aprobados aún.</div>'}
+</div>
+<div class="ftr">Preparado por <strong>${ag}</strong> · Contenido aprobado por cliente</div>
+</body></html>`;
+}
+
+// ══════════════════════════════════════════════
+// CLIENT PAGE VIEWER
 // ══════════════════════════════════════════════
 async function checkClientView(){
   const p=new URLSearchParams(location.search);
   if(p.get('view')!=='client')return false;
   const calId=p.get('id');if(!calId)return false;
   const cfg=JSON.parse(localStorage.getItem('qb_cfg')||'{}');
-  if(!cfg.sbUrl||!cfg.sbKey){document.body.innerHTML='<div style="padding:40px;font-family:sans-serif">Error: Supabase no configurado en este dispositivo. Abrí la app de admin primero.</div>';return true}
+  if(!cfg.sbUrl||!cfg.sbKey){document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#555">Error: configurá Supabase en el admin primero.</div>';return true}
   const sb2=supabase.createClient(cfg.sbUrl,cfg.sbKey);
   document.body.innerHTML='<div style="padding:40px;font-family:sans-serif;color:#555">Cargando…</div>';
   try{
     const{data,error}=await sb2.from('client_pages').select('html').eq('id',calId).single();
     if(error||!data)throw new Error('Página no encontrada');
     document.open();document.write(data.html);document.close();
-  }catch(e){
-    document.body.innerHTML=`<div style="padding:40px;font-family:sans-serif;color:#c00">Error: ${e.message}</div>`;
-  }
+  }catch(e){document.body.innerHTML=`<div style="padding:40px;font-family:sans-serif;color:#c00">Error: ${e.message}</div>`}
   return true;
 }
 
@@ -1152,47 +1338,26 @@ function openCM(ed=false){
   else{$id('c-nm').value='';$id('c-tp').value='';$id('c-color').value='#4ade80';$id('c-prev').style.background='#4ade80';$id('c-brief').value=''}
   openOv('ov-cm');
 }
-
 function saveClient(){
-  const name=$id('c-nm').value.trim();
-  if(!name){showToast('El nombre es obligatorio','err');return}
+  const name=$id('c-nm').value.trim();if(!name){showToast('El nombre es obligatorio','err');return}
   const obj={name,type:$id('c-tp').value.trim(),color:$id('c-color').value.trim()||'#4ade80',briefing:$id('c-brief').value.trim()};
   if(S.editing){
     const i=S.clients.findIndex(c=>c.id===S.editing);
-    if(i>-1){
-      S.clients[i]={...S.clients[i],...obj};
-      if(S.cur===S.editing){$id('ws-dot').style.background=obj.color;$id('ws-nm').textContent=obj.name;$id('ws-tp').textContent=obj.type;$id('brief-txt').textContent=obj.briefing||'Sin briefing.'}
-    }
+    if(i>-1){S.clients[i]={...S.clients[i],...obj};if(S.cur===S.editing){$id('ws-dot').style.background=obj.color;$id('ws-nm').textContent=obj.name;$id('ws-tp').textContent=obj.type;$id('brief-txt').textContent=obj.briefing||'Sin briefing.'}}
     persist();renderSB();renderDash();closeOv('ov-cm');showToast('Guardado ✓','ok');
   }else{
-    const c={id:'c'+Date.now(),...obj};
-    S.clients.push(c);S.convs[c.id]=[];S.cals[c.id]=[];
+    const c={id:'c'+Date.now(),...obj};S.clients.push(c);S.convs[c.id]=[];S.cals[c.id]=[];
     persist();renderSB();renderDash();closeOv('ov-cm');showToast('Cliente creado ✓','ok');showClient(c.id);
   }
 }
-
 function prevClr(v){if(/^#[0-9a-f]{6}$/i.test(v))$id('c-prev').style.background=v}
 function getC(id){return S.clients.find(c=>c.id===id)}
 
 // ══════════════════════════════════════════════
 // SETTINGS
 // ══════════════════════════════════════════════
-function openSettings(){
-  $id('s-key').value=S.cfg.apiKey;
-  $id('s-model').value=S.cfg.model;
-  $id('s-sburl').value=S.cfg.sbUrl;
-  $id('s-sbkey').value=S.cfg.sbKey;
-  $id('s-agency').value=S.cfg.agency;
-  openOv('ov-cfg');
-}
-function saveCfg(){
-  S.cfg.apiKey=$id('s-key').value.trim();
-  S.cfg.model=$id('s-model').value;
-  S.cfg.sbUrl=$id('s-sburl').value.trim().replace(/\/$/,'');
-  S.cfg.sbKey=$id('s-sbkey').value.trim();
-  S.cfg.agency=$id('s-agency').value.trim()||'QBIT';
-  persist();initSB();closeOv('ov-cfg');showToast('Configuración guardada ✓','ok');
-}
+function openSettings(){$id('s-key').value=S.cfg.apiKey;$id('s-model').value=S.cfg.model;$id('s-sburl').value=S.cfg.sbUrl;$id('s-sbkey').value=S.cfg.sbKey;$id('s-agency').value=S.cfg.agency;openOv('ov-cfg')}
+function saveCfg(){S.cfg.apiKey=$id('s-key').value.trim();S.cfg.model=$id('s-model').value;S.cfg.sbUrl=$id('s-sburl').value.trim().replace(/\/$/,'');S.cfg.sbKey=$id('s-sbkey').value.trim();S.cfg.agency=$id('s-agency').value.trim()||'QBIT';persist();initSB();closeOv('ov-cfg');showToast('Configuración guardada ✓','ok')}
 
 // ══════════════════════════════════════════════
 // MODAL HELPERS
@@ -1205,11 +1370,7 @@ document.querySelectorAll('.ov').forEach(o=>o.addEventListener('click',e=>{if(e.
 // TOAST
 // ══════════════════════════════════════════════
 let tt;
-function showToast(m,t=''){
-  const el=$id('toast');el.textContent=m;
-  el.className=`toast show ${t}`;
-  clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3200);
-}
+function showToast(m,t=''){const el=$id('toast');el.textContent=m;el.className=`toast show ${t}`;clearTimeout(tt);tt=setTimeout(()=>el.classList.remove('show'),3200)}
 
 // ══════════════════════════════════════════════
 // INIT
@@ -1217,9 +1378,7 @@ function showToast(m,t=''){
 async function init(){
   hydrate();
   const ic=await checkClientView();if(ic)return;
-  initSB();
-  renderSB();
-  renderDash();
+  initSB();renderSB();renderDash();
   $id('tval').textContent=S.tokens.toLocaleString();
   if(!S.cfg.apiKey)setTimeout(openSettings,600);
 }
