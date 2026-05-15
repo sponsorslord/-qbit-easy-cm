@@ -724,7 +724,11 @@ async function doSend(ov){
   const tid=showTyp();
 
   try{
-    const msgs=S.convs[id].map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content}));
+    // Build messages - last must be user, no consecutive same-role
+    const rawMsgs=S.convs[id].map(m=>({role:m.role==='assistant'?'assistant':'user',content:m.content}));
+    const msgs=[];
+    for(const msg of rawMsgs){if(msgs.length&&msgs[msgs.length-1].role===msg.role){msgs[msgs.length-1].content+='\n'+msg.content}else{msgs.push({...msg})}}
+    if(msgs.length&&msgs[msgs.length-1].role==='assistant')msgs.pop();
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':S.cfg.apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
@@ -800,14 +804,24 @@ REGLAS: tuteo rioplatense siempre. Sin hashtags. No repetir temas/marcas usadas.
 function tryParse(reply,cid){
   const lines=reply.split('\n');
   const blocks=[];let cur=null,opts=[];
-  const TMAP={institucional:'institucional','know-how':'know-how',educación:'know-how',producto:'producto',marca:'producto',identidad:'institucional'};
+  const TMAP={institucional:'institucional','know-how':'know-how','educación':'know-how','educacion':'know-how',producto:'producto',marca:'producto',identidad:'institucional'};
+  // Valid publication days in Spanish
+  const VALID_DAYS={lunes:1,miércoles:3,miercoles:3,viernes:5};
   for(const ln of lines){
     const clean=ln.trim();
+    // Match: **LUNES 7 — INSTITUCIONAL** or **MIÉRCOLES 9 — KNOW-HOW**
     const hm=clean.match(/^\*{0,2}([A-ZÁÉÍÓÚÑ]+)\s+(\d{1,2})(?:\s+DE\s+\w+)?\s*[—\-–]+\s*([^*\n]+)\*{0,2}$/i);
     if(hm){
+      const dayName=hm[1].toLowerCase().replace(/é/g,'e').replace(/é/g,'e');
+      // Only accept valid publication days
+      if(VALID_DAYS[dayName]===undefined&&VALID_DAYS[hm[1].toLowerCase()]===undefined){
+        // Not a valid pub day, skip
+        continue;
+      }
       if(cur&&opts.length)blocks.push({...cur,opts:[...opts]});
-      const tp=hm[3].toLowerCase().trim().replace(/[\/\s]+/g,'-');
-      cur={dayNum:parseInt(hm[2]),type:TMAP[tp]||tp};opts=[];continue;
+      const tp=hm[3].toLowerCase().trim().replace(/[\/\s]+/g,'-').replace(/é/g,'e').replace(/ó/g,'o').replace(/ú/g,'u');
+      const mappedType=TMAP[tp]||TMAP[hm[3].toLowerCase().trim()]||tp;
+      cur={dayNum:parseInt(hm[2]),type:mappedType,dayName:hm[1].toLowerCase()};opts=[];continue;
     }
     // Accepts both "Opción A:" and "A:" formats
     const om=clean.match(/^(?:Opci[oó]n\s+)?([ABC])[:\.\)]\s*(.+)$/i);
