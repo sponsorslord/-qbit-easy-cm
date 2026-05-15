@@ -445,18 +445,21 @@ let sb=null,tempSel=null;
 
 function $id(i){return document.getElementById(i)}
 function persist(){
-  localStorage.setItem('qb_c',JSON.stringify(S.clients));
-  localStorage.setItem('qb_cv',JSON.stringify(S.convs));
-  localStorage.setItem('qb_ca',JSON.stringify(S.cals));
-  localStorage.setItem('qb_cfg',JSON.stringify(S.cfg));
+  localStorage.setItem("qb_c",JSON.stringify(S.clients));
+  localStorage.setItem("qb_cv",JSON.stringify(S.convs));
+  localStorage.setItem("qb_ca",JSON.stringify(S.cals));
+  localStorage.setItem("qb_cfg",JSON.stringify(S.cfg));
+  localStorage.setItem("qb_cal",JSON.stringify({calMonth:S.calMonth,calYear:S.calYear,calIdeas:S.calIdeas,calPubs:S.calPubs,calHols:S.calHols,calSel:S.calSel,activeCalId:S.activeCalId}));
 }
 function hydrate(){
   try{
-    S.clients=JSON.parse(localStorage.getItem('qb_c')||'[]');
-    S.convs=JSON.parse(localStorage.getItem('qb_cv')||'{}');
-    S.cals=JSON.parse(localStorage.getItem('qb_ca')||'{}');
-    const c=JSON.parse(localStorage.getItem('qb_cfg')||'{}');
+    S.clients=JSON.parse(localStorage.getItem("qb_c")||"[]");
+    S.convs=JSON.parse(localStorage.getItem("qb_cv")||"{}");
+    S.cals=JSON.parse(localStorage.getItem("qb_ca")||"{}");
+    const c=JSON.parse(localStorage.getItem("qb_cfg")||"{}");
     S.cfg={...S.cfg,...c};
+    const cal=JSON.parse(localStorage.getItem("qb_cal")||"{}");
+    if(cal.calMonth){S.calMonth=cal.calMonth;S.calYear=cal.calYear;S.calIdeas=cal.calIdeas||{};S.calPubs=cal.calPubs||[];S.calHols=cal.calHols||[];S.calSel=cal.calSel||{};S.activeCalId=cal.activeCalId||null;}
   }catch(e){}
 }
 function initSB(){
@@ -836,9 +839,6 @@ Días: LUNES=Identidad/Institucional, MIÉRCOLES=Know-how, VIERNES=Producto/Marc
    - 2-3 emojis: solo ✅ 🌱 💡 🤝 🎯 🧬 💬 📍 📦 🔬 🌿 💨 🍃 🧪
    - Sin hashtags
    - Descripción visual para diseñadora con recursos online (Unsplash, Pexels, Freepik + términos exactos en inglés)
-
-Al final de las ideas, agregá siempre esta línea exacta para que el sistema la detecte:
-[SELECTOR_LISTO:${c.name||'cliente'}]
 
 REGLAS: Feriados aprovecharlo temáticamente. No repetir temas/marcas ya usados. Nunca "líderes" ni "los mejores".
 Español rioplatense, directo.`;
