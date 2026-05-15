@@ -1080,234 +1080,276 @@ function clearAppr(){
 // ══════════════════════════════════════════════
 // BUILD CLIENT PAGE — interactive calendar
 // ══════════════════════════════════════════════
+
+// ══════════════════════════════════════════════
+// BUILD CLIENT PAGE — interactive calendar
+// Uses string concat to avoid nested template literal issues
+// ══════════════════════════════════════════════
 function buildClientHTML(client,calId,teraSel,calIdeas,calPubs,calHols,monthLabel){
   const ag=S.cfg.agency||'QBIT';
   const m=S.calMonth,y=S.calYear;
-  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
-  const hols={};calHols.forEach(h=>hols[h.key]=h.name);
-  const pubs={};calPubs.forEach(p=>pubs[p.key]={type:p.type});
-
-  let calGridHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:16px;">`;
-  const dayNames=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  dayNames.forEach(d=>{calGridHTML+=`<div style="text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;padding:6px 0">${d}</div>`});
-  for(let i=0;i<off;i++)calGridHTML+=`<div></div>`;
-
-  const TC2={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educación:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
-  const TL2={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educación:'Know-how',producto:'Producto',marca:'Producto'};
   const MN2=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const TC2={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educacion:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
+  const TL2={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educacion:'Know-how',producto:'Producto',marca:'Producto'};
+  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
+  const hols={};calHols.forEach(function(h){hols[h.key]=h.name});
 
-  // Serialize ideas for JS
-  const ideasJSON=JSON.stringify(calIdeas).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
-  const teraSelJSON=JSON.stringify(teraSel).replace(/</g,'\\u003c').replace(/>/g,'\\u003e');
-
-  for(let d=1;d<=dim;d++){
-    const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const ip=!!pubs[key],ih=!!hols[key];
-    const type=calIdeas[key]?.type||pubs[key]?.type;
-    const col=TC2[type]||'#888';
-    const isTera=teraSel[key]!==undefined&&teraSel[key]!==null;
-    const teraIdx=teraSel[key];
-    const teraOpt=isTera&&calIdeas[key]?.opts?.[teraIdx];
-
-    let style=`min-height:72px;border-radius:6px;padding:5px;border:1px solid #e5e5e5;background:#fff;`;
-    if(ih)style=`min-height:72px;border-radius:6px;padding:5px;border:1px solid #fbbf2444;background:#fffbeb;`;
-    let inner=`<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:3px">${d}</div>`;
-    if(ih)inner+=`<div style="font-size:8px;color:#b45309">🟡 ${hols[key]}</div>`;
-    if(ip&&type){
-      inner+=`<div style="font-size:8px;padding:2px 4px;border-radius:3px;background:${col}22;color:${col};border:1px solid ${col}44;display:inline-block;margin-bottom:3px;text-transform:uppercase;letter-spacing:.5px">${TL2[type]||type}</div>`;
-      if(isTera&&teraOpt)inner+=`<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:2px">⭐ ${teraOpt.title}</div>`;
-      inner+=`<div style="font-size:9px;color:${col};cursor:pointer;text-decoration:underline" onclick="openDay('${key}')">Ver opciones</div>`;
-    }
-    const clickable=ip?`onclick="openDay('${key}')" style="${style}cursor:pointer"`:`style="${style}"`;
-    calGridHTML+=`<div id="day-${key.replace(/-/g,'_')}" ${clickable}>${inner}</div>`;
-  }
-  const rem=(7-(off+dim)%7)%7;for(let i=0;i<rem;i++)calGridHTML+=`<div></div>`;
-  calGridHTML+=`</div>`;
-
-  return`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${client.name} — Calendario | ${ag}</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>
-<style>*{box-sizing:border-box;margin:0;padding:0}:root{--a:${client.color}}body{background:#f7f7f5;color:#111;font-family:system-ui,sans-serif;min-height:100vh}.hdr{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}.dot{width:10px;height:10px;border-radius:50%;background:var(--a)}.hnm{font-size:16px;font-weight:600}.hby{font-size:11px;color:#999;margin-left:auto}.main{max-width:860px;margin:24px auto;padding:0 16px}.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:20px}.card-hdr{padding:12px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}.prog-wrap{display:flex;align-items:center;gap:10px;font-size:11px;color:#888}.prog-bar{width:140px;height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden}.prog-fill{height:100%;background:var(--a);border-radius:2px;transition:width .3s}.abar{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5e5e5;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px}.abtn{background:var(--a);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}.abtn:hover{opacity:.85}.abtn:disabled{opacity:.4;cursor:not-allowed}.ftr{text-align:center;padding:28px;font-size:11px;color:#999;border-top:1px solid #e5e5e5;margin-top:20px}
-/* MODAL */
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100;backdrop-filter:blur(4px)}.modal-bg.open{display:flex}.modal-box{background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:88vh;overflow-y:auto}.modal-hdr{padding:16px 20px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}.modal-x{background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1}.idea{border:2px solid #e5e5e5;border-radius:8px;padding:12px;margin:0 20px 10px;cursor:pointer;transition:all .15s}.idea:hover{border-color:#bbb}.idea.tera-sel{border-color:var(--a);background:#f0fdf4}.idea.selected{border-width:2px}.idea-ltr{font-size:9px;font-weight:700;letter-spacing:1px;margin-bottom:4px}.idea-ttl{font-size:13px;font-weight:600;margin-bottom:2px}.idea-dsc{font-size:11px;color:#777}.tera-badge{font-size:9px;background:#dcfce7;color:#166534;padding:2px 7px;border-radius:10px;margin-left:6px}.ok-msg{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:14px;text-align:center;font-weight:600;color:#2e7d32;font-size:15px;display:none;margin-bottom:16px}
-<\/style></head><body>
-<div class="hdr"><div class="dot"></div><div><div class="hnm">${client.name}</div><div style="font-size:11px;color:#999">Calendario de contenidos — ${monthLabel}</div></div><div class="hby">por ${ag}</div></div>
-<div class="main">
-  <div id="ok-msg" class="ok-msg">✓ ¡Aprobación enviada! Tu agencia ya fue notificada.</div>
-  <div class="card">
-    <div class="card-hdr">
-      <div style="font-size:12px;font-weight:500">Elegí el contenido de cada día</div>
-      <div class="prog-wrap"><div class="prog-bar"><div class="prog-fill" id="cli-prog" style="width:0%"></div></div><span id="cli-prog-txt">0 / 0</span></div>
-    </div>
-    ${calGridHTML}
-  </div>
-  <div style="font-size:12px;color:#777;margin-bottom:16px;padding:0 4px">⭐ = Sugerido por ${ag} · Podés elegir cualquier opción o confirmar la sugerencia.</div>
-</div>
-<div class="abar"><div style="font-size:13px;color:#555">¿Todo listo con el calendario?</div><button class="abtn" id="abtn" onclick="submitApproval()">✓ Enviar aprobación</button></div>
-<div class="ftr">Preparado por <strong>${ag}</strong> para ${client.name}</div>
-
-<!-- MODAL -->
-<div class="modal-bg" id="modal-bg">
-  <div class="modal-box">
-    <div class="modal-hdr"><div id="modal-title" style="font-size:14px;font-weight:600">—</div><button class="modal-x" onclick="closeModal()">×</button></div>
-    <div style="height:12px"></div>
-    <div id="modal-body"></div>
-    <div style="padding:12px 20px 16px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f0f0f0;margin-top:8px">
-      <button onclick="closeModal()" style="padding:7px 14px;border-radius:6px;border:1px solid #ddd;background:transparent;cursor:pointer;font-size:12px">Cancelar</button>
-      <button onclick="confirmDay()" style="padding:7px 14px;border-radius:6px;border:none;background:var(--a);color:#fff;cursor:pointer;font-size:12px;font-weight:600">Confirmar</button>
-    </div>
-  </div>
-</div>
-
-<script>
-const CAL_ID='${calId}';
-const SB_URL='${S.cfg.sbUrl}';
-const SB_KEY='${S.cfg.sbKey}';
-const CLIENT_COLOR='${client.color}';
-const TERA_SEL=${teraSelJSON};
-const IDEAS=${ideasJSON};
-const PUBS=${JSON.stringify(calPubs).replace(/</g,'\\u003c').replace(/>/g,'\\u003e')};
-const MN=${JSON.stringify(MN2)};
-const TL=${JSON.stringify(TL2)};
-const TC=${JSON.stringify(TC2)};
-
-let clientSel={...TERA_SEL};// start with Tera's picks
-let activeKey=null,tempIdx=null;
-let sb2=null;try{sb2=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
-
-// Init — pre-fill with Tera's selections and update visual
-document.addEventListener('DOMContentLoaded',()=>{
-  for(const[key,idx]of Object.entries(TERA_SEL)){if(idx!==null&&idx!==undefined)updateDayUI(key,idx)}
-  updateProg();
-});
-
-function openDay(key){
-  activeKey=key;tempIdx=clientSel[key]??null;
-  const ideas=IDEAS[key];if(!ideas?.opts)return;
-  const[,m,d]=key.split('-');const type=ideas.type;const col=TC[type]||'#888';
-  const isTera=(i)=>TERA_SEL[key]===i;
-  document.getElementById('modal-title').innerHTML=parseInt(d)+' de '+MN[parseInt(m)-1]+' — <span style="color:'+col+'">'+( TL[type]||type)+'</span>';
-  document.getElementById('modal-body').innerHTML=ideas.opts.map((o,i)=>`
-    <div class="idea ${isTera(i)?'tera-sel':''} ${tempIdx===i?'selected':''}" id="mi-${i}" onclick="selIdea(${i})" style="${tempIdx===i?'border-color:'+col+';':isTera(i)?'border-color:'+col+'99;':''}">
-      <div class="idea-ltr" style="color:${col}">${['A','B','C'][i]}${isTera(i)?'<span class="tera-badge">⭐ Sugerido por ${ag}</span>':''}</div>
-      <div class="idea-ttl">${o.title}</div>
-      ${o.desc?'<div class="idea-dsc">'+o.desc+'</div>':''}
-    </div>`).join('');
-  document.getElementById('modal-bg').classList.add('open');
-}
-function selIdea(i){
-  tempIdx=i;const ideas=IDEAS[activeKey];const col=TC[ideas?.type]||'#888';
-  document.querySelectorAll('[id^="mi-"]').forEach((el,idx)=>{
-    const isTera=TERA_SEL[activeKey]===idx;
-    el.className='idea'+(isTera?' tera-sel':'')+(idx===i?' selected':'');
-    el.style.borderColor=idx===i?col:isTera?col+'99':'#e5e5e5';
+  // Build calendar grid HTML using string concat (no nested backticks)
+  var calHTML='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:16px">';
+  ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(function(d){
+    calHTML+='<div style="text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;padding:6px 0">'+d+'</div>';
   });
-}
-function confirmDay(){
-  if(tempIdx===null)return;
-  clientSel[activeKey]=tempIdx;
-  updateDayUI(activeKey,tempIdx);
-  updateProg();closeModal();
-}
-function closeModal(){document.getElementById('modal-bg').classList.remove('open')}
-function updateDayUI(key,idx){
-  const el=document.getElementById('day-'+key.replace(/-/g,'_'));if(!el)return;
-  const ideas=IDEAS[key];if(!ideas?.opts)return;
-  const opt=ideas.opts[idx];const type=ideas.type;const col=TC[type]||'#888';
-  const isTera=TERA_SEL[key]===idx;
-  const selDiv=el.querySelector('[data-sel]')||el;
-  // Update the "ver opciones" line to show selection
-  const links=el.querySelectorAll('[style*="cursor:pointer"]');
-  links.forEach(l=>{l.textContent='✓ '+opt.title;l.style.color=col;l.style.fontStyle='normal';l.style.textDecoration='none'});
-  el.style.borderColor=col;el.style.borderWidth='2px';
-}
-function updateProg(){
-  const tot=PUBS.length;
-  const done=Object.keys(clientSel).filter(k=>clientSel[k]!==null&&clientSel[k]!==undefined).length;
-  const pct=tot?Math.round(done/tot*100):0;
-  document.getElementById('cli-prog').style.width=pct+'%';
-  document.getElementById('cli-prog-txt').textContent=done+' / '+tot;
-}
-async function submitApproval(){
-  const btn=document.getElementById('abtn');
-  btn.disabled=true;btn.textContent='Enviando…';
-  try{
-    if(sb2){await sb2.from('approvals').upsert({id:CAL_ID,data:JSON.stringify(clientSel),approved_at:new Date().toISOString()})}
-    document.getElementById('ok-msg').style.display='block';
-    btn.textContent='✓ Enviado';
-    window.scrollTo({top:0,behavior:'smooth'});
-  }catch(e){btn.disabled=false;btn.textContent='✓ Enviar aprobación';alert('Error: '+e.message)}
-}
-<\/script>
-<!--FUTURO: generar imagen al confirmar opción → POST /api/generate-image {calId,copy} → mostrar img bajo la opción-->
-</body></html>`;
+  for(var i=0;i<off;i++)calHTML+='<div></div>';
+  for(var d=1;d<=dim;d++){
+    var key=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var ih=!!hols[key];
+    var ideas=calIdeas[key];var hasPub=!!ideas;
+    var type=ideas?ideas.type:'';var col=TC2[type]||'#888';
+    var isTeraPicked=teraSel[key]!==undefined&&teraSel[key]!==null;
+    var teraIdx=teraSel[key];
+    var teraOpt=isTeraPicked&&ideas&&ideas.opts?ideas.opts[teraIdx]:null;
+    var dayStyle='min-height:72px;border-radius:6px;padding:5px;border:1px solid;';
+    dayStyle+=ih?'border-color:#fbbf2444;background:#fffbeb;':'border-color:#e5e5e5;background:#fff;';
+    var inner='<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:3px">'+d+'</div>';
+    if(ih)inner+='<div style="font-size:8px;color:#b45309">🟡 '+hols[key]+'</div>';
+    if(hasPub&&type){
+      inner+='<div style="font-size:8px;padding:2px 4px;border-radius:3px;background:'+col+'22;color:'+col+';border:1px solid '+col+'44;display:inline-block;margin-bottom:3px;text-transform:uppercase">'+( TL2[type]||type)+'</div>';
+      if(isTeraPicked&&teraOpt)inner+='<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:2px">⭐ '+teraOpt.title+'</div>';
+      inner+='<div onclick="openDay(\''+key+'\')" style="font-size:9px;color:'+col+';cursor:pointer;text-decoration:underline">Ver opciones</div>';
+    }
+    var clickAttr=hasPub?'onclick="openDay(\''+key+'\')"':'';
+    calHTML+='<div id="day-'+key.replace(/-/g,'_')+'" '+clickAttr+' style="'+dayStyle+'cursor:'+(hasPub?'pointer':'default')+'">'+inner+'</div>';
+  }
+  var rem=(7-(off+dim)%7)%7;for(var i=0;i<rem;i++)calHTML+='<div></div>';
+  calHTML+='</div>';
+
+  // Serialize data safely
+  var ideasJSON=JSON.stringify(calIdeas).replace(/<\//g,'<\\/');
+  var teraSelJSON=JSON.stringify(teraSel).replace(/<\//g,'<\\/');
+  var pubsJSON=JSON.stringify(calPubs).replace(/<\//g,'<\\/');
+  var MNjson=JSON.stringify(MN2);
+  var TLjson=JSON.stringify(TL2);
+  var TCjson=JSON.stringify(TC2);
+
+  var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+  html+='<title>'+client.name+' — Calendario | '+ag+'</title>';
+  html+='<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>';
+  html+='<style>';
+  html+='*{box-sizing:border-box;margin:0;padding:0}';
+  html+=':root{--a:'+client.color+'}';
+  html+='body{background:#f7f7f5;color:#111;font-family:system-ui,sans-serif;min-height:100vh}';
+  html+='.hdr{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:10}';
+  html+='.dot{width:10px;height:10px;border-radius:50%;background:var(--a)}';
+  html+='.main{max-width:860px;margin:24px auto;padding:0 16px}';
+  html+='.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:20px}';
+  html+='.prog-bar{width:140px;height:4px;background:#f0f0f0;border-radius:2px;overflow:hidden}';
+  html+='.prog-fill{height:100%;background:var(--a);border-radius:2px;transition:width .3s}';
+  html+='.abar{position:sticky;bottom:0;background:#fff;border-top:1px solid #e5e5e5;padding:12px 28px;display:flex;align-items:center;justify-content:space-between;gap:12px}';
+  html+='.abtn{background:var(--a);color:#fff;border:none;border-radius:8px;padding:10px 22px;font-size:14px;font-weight:600;cursor:pointer}';
+  html+='.abtn:disabled{opacity:.4;cursor:not-allowed}';
+  html+='.ok-msg{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:8px;padding:14px;text-align:center;font-weight:600;color:#2e7d32;font-size:15px;display:none;margin-bottom:16px}';
+  html+='.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}';
+  html+='.modal-bg.open{display:flex}';
+  html+='.modal-box{background:#fff;border-radius:12px;width:480px;max-width:95vw;max-height:88vh;overflow-y:auto}';
+  html+='.modal-hdr{padding:16px 20px 12px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between}';
+  html+='.modal-x{background:none;border:none;font-size:20px;cursor:pointer;color:#999;line-height:1}';
+  html+='.idea{border:2px solid #e5e5e5;border-radius:8px;padding:12px;margin:0 20px 10px;cursor:pointer;transition:border-color .15s}';
+  html+='.idea.tera-sel{border-color:var(--a);background:#f0fdf4}';
+  html+='.idea-ltr{font-size:9px;font-weight:700;letter-spacing:1px;margin-bottom:4px}';
+  html+='.idea-ttl{font-size:13px;font-weight:600;margin-bottom:2px}';
+  html+='.idea-dsc{font-size:11px;color:#777}';
+  html+='.tera-badge{font-size:9px;background:#dcfce7;color:#166534;padding:2px 7px;border-radius:10px;margin-left:6px}';
+  html+='</style></head><body>';
+  html+='<div class="hdr"><div class="dot"></div><div>';
+  html+='<div style="font-size:16px;font-weight:600">'+client.name+'</div>';
+  html+='<div style="font-size:11px;color:#999">Calendario — '+monthLabel+'</div>';
+  html+='</div><div style="font-size:11px;color:#999;margin-left:auto">por '+ag+'</div></div>';
+  html+='<div class="main">';
+  html+='<div id="ok-msg" class="ok-msg">✓ ¡Aprobación enviada! Tu agencia ya fue notificada.</div>';
+  html+='<div class="card">';
+  html+='<div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between">';
+  html+='<div style="font-size:12px;font-weight:500">Elegí el contenido de cada día</div>';
+  html+='<div style="display:flex;align-items:center;gap:8px;font-size:11px;color:#888"><div class="prog-bar"><div class="prog-fill" id="cli-prog" style="width:0%"></div></div><span id="cli-prog-txt">0 / 0</span></div>';
+  html+='</div>';
+  html+=calHTML;
+  html+='</div>';
+  html+='<div style="font-size:12px;color:#777;margin-bottom:16px;padding:0 4px">⭐ = Sugerido por '+ag+' · Podés confirmar o elegir otra opción.</div>';
+  html+='</div>';
+  html+='<div class="abar"><div style="font-size:13px;color:#555">¿Todo listo?</div>';
+  html+='<button class="abtn" id="abtn" onclick="submitApproval()">✓ Enviar aprobación</button></div>';
+  html+='<div style="text-align:center;padding:28px;font-size:11px;color:#999">Preparado por '+ag+' para '+client.name+'</div>';
+  html+='<div class="modal-bg" id="modal-bg">';
+  html+='<div class="modal-box">';
+  html+='<div class="modal-hdr"><div id="modal-title" style="font-size:14px;font-weight:600">—</div>';
+  html+='<button class="modal-x" onclick="closeModal()">×</button></div>';
+  html+='<div style="height:12px"></div>';
+  html+='<div id="modal-body"></div>';
+  html+='<div style="padding:12px 20px 16px;display:flex;justify-content:flex-end;gap:8px;border-top:1px solid #f0f0f0;margin-top:8px">';
+  html+='<button onclick="closeModal()" style="padding:7px 14px;border-radius:6px;border:1px solid #ddd;background:transparent;cursor:pointer;font-size:12px">Cancelar</button>';
+  html+='<button onclick="confirmDay()" style="padding:7px 14px;border-radius:6px;border:none;background:var(--a);color:#fff;cursor:pointer;font-size:12px;font-weight:600">Confirmar</button>';
+  html+='</div></div></div>';
+  html+='<script>';
+  html+='var CAL_ID='+JSON.stringify(calId)+';';
+  html+='var SB_URL='+JSON.stringify(S.cfg.sbUrl)+';';
+  html+='var SB_KEY='+JSON.stringify(S.cfg.sbKey)+';';
+  html+='var TERA_SEL='+teraSelJSON+';';
+  html+='var IDEAS='+ideasJSON+';';
+  html+='var PUBS='+pubsJSON+';';
+  html+='var MN='+MNjson+';';
+  html+='var TL='+TLjson+';';
+  html+='var TC='+TCjson+';';
+  html+='var AG='+JSON.stringify(ag)+';';
+  html+='var clientSel=JSON.parse(JSON.stringify(TERA_SEL));';
+  html+='var activeKey=null,tempIdx=null;';
+  html+='var sb2=null;try{sb2=supabase.createClient(SB_URL,SB_KEY)}catch(e){}';
+  html+='function init(){Object.keys(TERA_SEL).forEach(function(k){if(TERA_SEL[k]!==null&&TERA_SEL[k]!==undefined)updateDayUI(k,TERA_SEL[k])});updateProg()}';
+  html+='function openDay(key){';
+  html+='  activeKey=key;tempIdx=clientSel[key]!==undefined?clientSel[key]:null;';
+  html+='  var ideas=IDEAS[key];if(!ideas||!ideas.opts)return;';
+  html+='  var parts=key.split("-");var d=parseInt(parts[2]);var mo=parseInt(parts[1]);';
+  html+='  var type=ideas.type;var col=TC[type]||"#888";';
+  html+='  document.getElementById("modal-title").innerHTML=d+" de "+MN[mo-1]+" — <span style=\'color:"+col+"\'>"+( TL[type]||type)+"</span>";';
+  html+='  var body="";';
+  html+='  ideas.opts.forEach(function(o,i){';
+  html+='    var isTera=TERA_SEL[key]===i;';
+  html+='    var isSel=tempIdx===i;';
+  html+='    var bc=isSel?col:isTera?col+"99":"#e5e5e5";';
+  html+='    var cls="idea"+(isTera?" tera-sel":"")+(isSel?" selected":"");';
+  html+='    body+="<div class=\'"+cls+"\' id=\'mi-"+i+"\' onclick=\'selIdea("+i+")\' style=\'border-color:"+bc+"\'>";';
+  html+='    body+="<div class=\'idea-ltr\' style=\'color:"+col+"\'>"+["A","B","C"][i];';
+  html+='    if(isTera)body+="<span class=\'tera-badge\'>⭐ Sugerido por "+AG+"</span>";';
+  html+='    body+="</div>";';
+  html+='    body+="<div class=\'idea-ttl\'>"+o.title+"</div>";';
+  html+='    if(o.desc)body+="<div class=\'idea-dsc\'>"+o.desc+"</div>";';
+  html+='    body+="</div>";';
+  html+='  });';
+  html+='  document.getElementById("modal-body").innerHTML=body;';
+  html+='  document.getElementById("modal-bg").classList.add("open");';
+  html+='}';
+  html+='function selIdea(i){';
+  html+='  tempIdx=i;';
+  html+='  var ideas=IDEAS[activeKey];var col=TC[ideas?ideas.type:""]||"#888";';
+  html+='  for(var j=0;j<3;j++){var el=document.getElementById("mi-"+j);if(!el)continue;';
+  html+='    var isTera=TERA_SEL[activeKey]===j;';
+  html+='    el.className="idea"+(isTera?" tera-sel":"")+(j===i?" selected":"");';
+  html+='    el.style.borderColor=j===i?col:isTera?col+"99":"#e5e5e5";';
+  html+='  }';
+  html+='}';
+  html+='function confirmDay(){';
+  html+='  if(tempIdx===null)return;';
+  html+='  clientSel[activeKey]=tempIdx;';
+  html+='  updateDayUI(activeKey,tempIdx);updateProg();closeModal();';
+  html+='}';
+  html+='function closeModal(){document.getElementById("modal-bg").classList.remove("open")}';
+  html+='function updateDayUI(key,idx){';
+  html+='  var el=document.getElementById("day-"+key.replace(/-/g,"_"));if(!el)return;';
+  html+='  var ideas=IDEAS[key];if(!ideas||!ideas.opts)return;';
+  html+='  var opt=ideas.opts[idx];var col=TC[ideas.type]||"#888";';
+  html+='  el.style.borderColor=col;el.style.borderWidth="2px";el.style.borderStyle="solid";';
+  html+='  var links=el.querySelectorAll("[onclick]");';
+  html+='  links.forEach(function(l){l.textContent="✓ "+opt.title;l.style.textDecoration="none";l.style.fontStyle="normal";l.style.color=col});';
+  html+='}';
+  html+='function updateProg(){';
+  html+='  var tot=PUBS.length;';
+  html+='  var done=Object.keys(clientSel).filter(function(k){return clientSel[k]!==null&&clientSel[k]!==undefined}).length;';
+  html+='  var pct=tot?Math.round(done/tot*100):0;';
+  html+='  document.getElementById("cli-prog").style.width=pct+"%";';
+  html+='  document.getElementById("cli-prog-txt").textContent=done+" / "+tot;';
+  html+='}';
+  html+='async function submitApproval(){';
+  html+='  var btn=document.getElementById("abtn");btn.disabled=true;btn.textContent="Enviando…";';
+  html+='  try{';
+  html+='    if(sb2){await sb2.from("approvals").upsert({id:CAL_ID,data:JSON.stringify(clientSel),approved_at:new Date().toISOString()})}';
+  html+='    document.getElementById("ok-msg").style.display="block";btn.textContent="✓ Enviado";';
+  html+='    window.scrollTo({top:0,behavior:"smooth"});';
+  html+='  }catch(e){btn.disabled=false;btn.textContent="✓ Enviar aprobación";alert("Error: "+e.message)}';
+  html+='}';
+  html+='window.onload=init;';
+  html+='<\/script>';
+  html+='<!-- FUTURO: POST /api/generate-image {calId, copy} al confirmar opción -->';
+  html+='</body></html>';
+  return html;
 }
 
 // ══════════════════════════════════════════════
-// BUILD DESIGNER PAGE — read only, final only
+// BUILD DESIGNER PAGE — read only, approved only
 // ══════════════════════════════════════════════
 function buildDesignerHTML(client,calId,finalSel,calIdeas,calPubs,calHols,monthLabel){
   const ag=S.cfg.agency||'QBIT';
   const m=S.calMonth,y=S.calYear;
-  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
-  const hols={};calHols.forEach(h=>hols[h.key]=h.name);
-  const TC2={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educación:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
-  const TL2={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educación:'Know-how',producto:'Producto',marca:'Producto'};
   const MN2=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const TC2={institucional:'#60a5fa',identidad:'#60a5fa','know-how':'#4ade80',educacion:'#4ade80',producto:'#fb923c',marca:'#fb923c'};
+  const TL2={institucional:'Identidad',identidad:'Identidad','know-how':'Know-how',educacion:'Know-how',producto:'Producto',marca:'Producto'};
+  const fd=new Date(y,m-1,1).getDay();const off=fd===0?6:fd-1;const dim=new Date(y,m,0).getDate();
+  const hols={};calHols.forEach(function(h){hols[h.key]=h.name});
 
-  let calHTML=`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:16px">`;
-  ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(d=>{calHTML+=`<div style="text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;padding:6px 0">${d}</div>`});
-  for(let i=0;i<off;i++)calHTML+=`<div></div>`;
-  for(let d=1;d<=dim;d++){
-    const key=`${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const ih=!!hols[key];const sel=finalSel[key];
-    const ideas=calIdeas[key];const hasPub=!!ideas;
-    const type=ideas?.type;const col=TC2[type]||'#888';const opt=hasPub&&sel!==undefined&&sel!==null?ideas?.opts?.[sel]:null;
-    let s=`min-height:80px;border-radius:6px;padding:7px;border:1px solid;`;
-    if(ih)s+=`border-color:#fbbf2444;background:#fffbeb;`;
-    else if(hasPub&&opt)s+=`border-color:${col};background:${col}11;`;
-    else s+=`border-color:#e5e5e5;background:#fff;`;
-    let inner=`<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:3px">${d}</div>`;
-    if(ih)inner+=`<div style="font-size:8px;color:#b45309">🟡 ${hols[key]}</div>`;
+  var calHTML='<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;padding:16px">';
+  ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'].forEach(function(d){
+    calHTML+='<div style="text-align:center;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#999;padding:6px 0">'+d+'</div>';
+  });
+  for(var i=0;i<off;i++)calHTML+='<div></div>';
+  for(var d=1;d<=dim;d++){
+    var key=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+    var ih=!!hols[key];var sel=finalSel[key];
+    var ideas=calIdeas[key];var hasPub=!!ideas;
+    var type=ideas?ideas.type:'';var col=TC2[type]||'#888';
+    var opt=hasPub&&sel!==undefined&&sel!==null&&ideas.opts?ideas.opts[sel]:null;
+    var s='min-height:80px;border-radius:6px;padding:7px;border:1px solid;';
+    s+=ih?'border-color:#fbbf2444;background:#fffbeb;':hasPub&&opt?'border-color:'+col+';background:'+col+'11;':'border-color:#e5e5e5;background:#fff;';
+    var inner='<div style="font-size:11px;font-weight:600;color:#333;margin-bottom:3px">'+d+'</div>';
+    if(ih)inner+='<div style="font-size:8px;color:#b45309">🟡 '+hols[key]+'</div>';
     if(hasPub&&opt){
-      inner+=`<div style="font-size:8px;padding:2px 4px;border-radius:3px;background:${col}22;color:${col};border:1px solid ${col}44;display:inline-block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px">${TL2[type]||type}</div>`;
-      inner+=`<div style="font-size:10px;font-weight:600;color:#111;margin-bottom:2px">${opt.title}</div>`;
-      if(opt.desc)inner+=`<div style="font-size:9px;color:#666;line-height:1.4">${opt.desc}</div>`;
-    } else if(hasPub){
-      inner+=`<div style="font-size:9px;color:#bbb">Sin selección</div>`;
-    }
-    calHTML+=`<div style="${s}">${inner}</div>`;
+      inner+='<div style="font-size:8px;padding:2px 4px;border-radius:3px;background:'+col+'22;color:'+col+';border:1px solid '+col+'44;display:inline-block;margin-bottom:4px;text-transform:uppercase">'+( TL2[type]||type)+'</div>';
+      inner+='<div style="font-size:10px;font-weight:600;color:#111;margin-bottom:2px">'+opt.title+'</div>';
+      if(opt.desc)inner+='<div style="font-size:9px;color:#666;line-height:1.4">'+opt.desc+'</div>';
+    }else if(hasPub){inner+='<div style="font-size:9px;color:#bbb">Sin selección</div>'}
+    calHTML+='<div style="'+s+'">'+inner+'</div>';
   }
-  const rem=(7-(off+dim)%7)%7;for(let i=0;i<rem;i++)calHTML+=`<div></div>`;
-  calHTML+=`</div>`;
+  var rem=(7-(off+dim)%7)%7;for(var i=0;i<rem;i++)calHTML+='<div></div>';
+  calHTML+='</div>';
 
-  // Posts list for DG
-  let postsList='';
-  for(const{key,dayNum,type}of calPubs){
-    const sel=finalSel[key];const ideas=calIdeas[key];
-    if(sel===undefined||sel===null||!ideas)continue;
-    const opt=ideas.opts[sel];if(!opt)continue;
-    const[,mo,d]=key.split('-');const col=TC2[type]||'#888';
-    postsList+=`<div style="background:#fff;border:1px solid #e5e5e5;border-left:3px solid ${col};border-radius:6px;padding:14px;margin-bottom:12px">
-      <div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:${col};margin-bottom:6px">${parseInt(d)}/${parseInt(mo)} · ${TL2[type]||type}</div>
-      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${opt.title}</div>
-      ${opt.desc?`<div style="font-size:12px;color:#555;margin-bottom:8px">${opt.desc}</div>`:''}
-      <div style="background:#f7f7f5;border-radius:4px;padding:10px;font-size:11px;color:#777">[ PEGAR DISEÑO AQUÍ ]</div>
-    </div>`;
-  }
+  var postsList='';
+  calPubs.forEach(function(p){
+    var key=p.key;var sel=finalSel[key];var ideas=calIdeas[key];
+    if(sel===undefined||sel===null||!ideas)return;
+    var opt=ideas.opts[sel];if(!opt)return;
+    var parts=key.split('-');var d=parseInt(parts[2]);var mo=parseInt(parts[1]);
+    var col=TC2[p.type]||'#888';
+    postsList+='<div style="background:#fff;border:1px solid #e5e5e5;border-left:3px solid '+col+';border-radius:6px;padding:14px;margin-bottom:12px">';
+    postsList+='<div style="font-size:10px;letter-spacing:1px;text-transform:uppercase;color:'+col+';margin-bottom:6px">'+d+'/'+mo+' · '+(TL2[p.type]||p.type)+'</div>';
+    postsList+='<div style="font-size:13px;font-weight:600;margin-bottom:4px">'+opt.title+'</div>';
+    if(opt.desc)postsList+='<div style="font-size:12px;color:#555;margin-bottom:8px">'+opt.desc+'</div>';
+    postsList+='<div style="background:#f7f7f5;border-radius:4px;padding:10px;font-size:11px;color:#777">[ PEGAR DISEÑO AQUÍ ]</div>';
+    postsList+='</div>';
+  });
 
-  return`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${client.name} — Para Diseñadora | ${ag}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f7f7f5;color:#111;font-family:system-ui,sans-serif;min-height:100vh}.hdr{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;align-items:center;gap:12px}.dot{width:10px;height:10px;border-radius:50%;background:${client.color}}.hnm{font-size:16px;font-weight:600}.hby{font-size:11px;color:#999;margin-left:auto}.badge{font-size:10px;padding:4px 10px;border-radius:10px;background:#ede9fe;color:#7c3aed;border:1px solid #c4b5fd;font-weight:600}.main{max-width:860px;margin:24px auto;padding:0 16px}.st{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e5e5e5}.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:24px}.ftr{text-align:center;padding:28px;font-size:11px;color:#999;border-top:1px solid #e5e5e5;margin-top:20px}<\/style></head><body>
-<div class="hdr"><div class="dot"></div><div><div class="hnm">${client.name}</div><div style="font-size:11px;color:#999">Calendario aprobado — ${monthLabel}</div></div><div class="hby"><span class="badge">🎨 Para diseñadora</span></div></div>
-<div class="main">
-  <div class="card">
-    <div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:500">Vista de calendario</div>
-    ${calHTML}
-  </div>
-  <div class="st">Contenidos aprobados</div>
-  ${postsList||'<div style="color:#999;font-size:12px">Sin contenidos aprobados aún.</div>'}
-</div>
-<div class="ftr">Preparado por <strong>${ag}</strong> · Contenido aprobado por cliente</div>
-</body></html>`;
+  var html='<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">';
+  html+='<title>'+client.name+' — Para Diseñadora | '+ag+'</title>';
+  html+='<style>*{box-sizing:border-box;margin:0;padding:0}body{background:#f7f7f5;color:#111;font-family:system-ui,sans-serif;min-height:100vh}';
+  html+='.hdr{background:#fff;border-bottom:1px solid #e5e5e5;padding:14px 28px;display:flex;align-items:center;gap:12px}';
+  html+='.main{max-width:860px;margin:24px auto;padding:0 16px}';
+  html+='.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;overflow:hidden;margin-bottom:24px}';
+  html+='.st{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#999;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid #e5e5e5}';
+  html+='</style></head><body>';
+  html+='<div class="hdr">';
+  html+='<div style="width:10px;height:10px;border-radius:50%;background:'+client.color+'"></div>';
+  html+='<div><div style="font-size:16px;font-weight:600">'+client.name+'</div>';
+  html+='<div style="font-size:11px;color:#999">Calendario aprobado — '+monthLabel+'</div></div>';
+  html+='<div style="margin-left:auto;font-size:10px;padding:4px 10px;border-radius:10px;background:#ede9fe;color:#7c3aed;border:1px solid #c4b5fd;font-weight:600">🎨 Para diseñadora</div>';
+  html+='</div>';
+  html+='<div class="main">';
+  html+='<div class="card">';
+  html+='<div style="padding:12px 16px;border-bottom:1px solid #f0f0f0;font-size:12px;font-weight:500">Vista de calendario</div>';
+  html+=calHTML;
+  html+='</div>';
+  html+='<div class="st">Contenidos aprobados</div>';
+  html+=(postsList||'<div style="color:#999;font-size:12px">Sin contenidos aprobados aún.</div>');
+  html+='</div>';
+  html+='<div style="text-align:center;padding:28px;font-size:11px;color:#999;border-top:1px solid #e5e5e5;margin-top:20px">Preparado por '+ag+' · Aprobado por cliente</div>';
+  html+='</body></html>';
+  return html;
 }
+
 
 // ══════════════════════════════════════════════
 // CLIENT PAGE VIEWER
